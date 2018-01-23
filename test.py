@@ -1,6 +1,8 @@
 """Test script for BAMS port."""
 
 import numpy as np
+from active_learner import *
+from query_strategies import HyperCubePool, RandomStrategy
 
 # import bams
 
@@ -9,7 +11,7 @@ np.random.seed(5822646)
 
 def f1(x):
     """A test oracle function."""
-    return np.sin(x) + 0.2 * np.random.randn()
+    return np.sum(np.sin(x) + 0.2 * np.random.randn())
 
 
 def f2(x):
@@ -41,19 +43,16 @@ def f3(x):
 #     query_strategy="random",
 # )
 
-# # for i in range(500):
-# #     x = learner.query()
-# #     y = f1(x)
-# #     learner.train(x, y)
+pool = HyperCubePool(2, 10)
+qs = RandomStrategy(pool)
+learner = ActiveLearner(query_strategy=qs)
 
-# # y_predict = np.linspace(0, 1, 50)
-# # print(learner.predict(y_predict))
-# # learner.plot_predictions(y_predict)
-# # print(learner.map_model_kernel)
+for i in range(10):
+    x = learner.query()
+    y = f1(x)
+    learner.update(x, y)
 
-def my_loop(generator):
-    for i in generator:
-        print(i)
-
-
-my_loop(range(10))
+# y_predict = np.linspace(0, 1, 50)
+# print(learner.predict(y_predict))
+# learner.plot_predictions(y_predict)
+# print(learner.map_model_kernel)
