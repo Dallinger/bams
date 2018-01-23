@@ -1,21 +1,10 @@
+"""Query strategies for a learner."""
+
 import random
 
 import numpy as np
 import scipy.integrate as integrate
 import sobol_seq
-
-
-class QueryStrategy(object):
-
-    def __init__(self, pool=None, dim=2):
-        if pool:
-            self.pool = pool
-        else:
-            self.pool = HyperCubePool(dim, 100)
-
-    def next(self):
-        """Select the next point"""
-        raise NotImplementedError
 
 
 class HyperCubePool(object):
@@ -33,16 +22,27 @@ class HyperCubePool(object):
             self.num_points)
 
 
-class RandomStrategy(QueryStrategy):
+class QueryStrategy(object):
 
-    def __init__(self, **kwargs):
-        super(RandomStrategy, self).__init__(**kwargs)
-        self.num_points = self.pool.num_points if self.pool else 0
-        self.active_points = [i for i in range(self.num_points)]
+    def __init__(self, pool=None, dim=2):
+        if pool:
+            self.pool = pool
+        else:
+            self.pool = HyperCubePool(dim, 100)
 
     def next(self):
-        index = random.sample(self.active_points, 1)
-        return self.pool[index[0]]
+        """Select the point with the highest score."""
+        scores = np.array([self.score(point) for point in self.pool._hypercube])
+        return self.pool._hypercube[np.argmax(scores)]
+
+    def score(self, point):
+        raise NotImplementedError
+
+
+class RandomStrategy(QueryStrategy):
+
+    def score(self, point):
+        return random.random()
 
     def __repr__(self):
         return 'RandomStrategy. Active_points={}.'.format(self.num_points)
@@ -117,8 +117,12 @@ class BAMS(QueryStrategy):
 
 
 class QBC(QueryStrategy):
-    pass
+
+    def score(self):
+        raise NotImplementedError
 
 
 class UncertaintySampling(QueryStrategy):
-    pass
+
+    def score(self):
+        raise NotImplementedError
