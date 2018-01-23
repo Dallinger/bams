@@ -5,8 +5,9 @@ from active_learner import *
 from query_strategies import HyperCubePool, RandomStrategy
 
 # import bams
-
-np.random.seed(5822646)
+s = 5822646
+random.seed(s)
+np.random.seed(s)
 
 
 def f1(x):
