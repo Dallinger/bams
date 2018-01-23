@@ -1,10 +1,18 @@
 import george
-import scipy.integrate as integrate
 import numpy as np
-from interfaces import Models
+import scipy.integrate as integrate
 
 
-class GrammarModels(Models):
+class Model(object):
+
+    def update(self, x, y):
+        raise NotImplementedError
+
+    def predict(self, x):
+        raise NotImplementedError
+
+
+class GrammarModels(Model):
     """ A collections of models from the Grammar of kernels"""
 
     def __init__(self, base_kernels=["LIN", "PER"], max_depth=2):

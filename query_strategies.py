@@ -1,6 +1,15 @@
-from interfaces import QueryStrategy
 import sobol_seq
-from random import *
+
+
+class QueryStrategy(object):
+
+    def next(self):
+        """Select the next point"""
+        raise NotImplementedError
+
+    def update(self, x):
+        """Update the pool of points"""
+        raise NotImplementedError
 
 
 class HyperCubePool():
