@@ -24,6 +24,8 @@ class ActiveLearner(object):
 
     def update(self, x, y):
         self.data.update(x, y)
+        for model in self.models:
+            model.update(x, y)
 
     def query(self):
         return self.query_strategy.next()
@@ -44,7 +46,6 @@ class ActiveLearner(object):
         # Compute the log model evidence.
         log_evidences = np.zeros(len(self.models))
         for i, model in enumerate(self.models):
-            model.compute(self.data.x[:, 0].flatten(), yerr=0.1)
             log_evidences[i] = model.log_likelihood(self.data.y.flatten())
 
         # Compute the model posteriors.
@@ -58,11 +59,7 @@ class ActiveLearner(object):
 
     def predict(self, x):
         """TODO: Should we be doing some sort of model averaging?"""
-        return self.map_model.predict(
-            self.data.y.flatten(),
-            x[:, dim],
-            return_var=True
-        )
+        return self.map_model.predict(x)
 
     def plot_predictions(self, x):
         """Plot the learner's predictions."""

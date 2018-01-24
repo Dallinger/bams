@@ -1,6 +1,8 @@
 import george
 import numpy as np
 
+from data import VectorData
+
 
 class Model(object):
 
@@ -11,6 +13,28 @@ class Model(object):
         raise NotImplementedError
 
 
+class GPModel(Model):
+
+    def __init__(self, kernel=None):
+        self.kernel = kernel
+        self.gp = george.GP(kernel)
+        self.data = VectorData()
+
+    def update(self, x, y):
+        self.data.update(x, y)
+        self.gp.compute(self.data.x[:, 0].flatten(), yerr=0.1)
+
+    def predict(self, x):
+        return self.gp.predict(
+            self.data.y.flatten(),
+            x[:, 0],
+            return_var=True
+        )
+
+    def log_likelihood(self, y):
+        return self.gp.log_likelihood(y)
+
+
 class GrammarModels(object):
     """A collections of models from the grammar of kernels."""
 
@@ -18,7 +42,7 @@ class GrammarModels(object):
         self.max_depth = max_depth
         self.base_kernels = base_kernels
         self.kernels = self.build_kernels(self.base_kernels)
-        self.models = [george.GP(k) for k in self.kernels]
+        self.models = [GPModel(kernel=k) for k in self.kernels]
         self.probabilities = np.ones(len(self.models)) / len(self.models)
 
     def build_kernels(self, kernel_names):
