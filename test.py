@@ -27,17 +27,35 @@ def f3(x):
     return max(0, min(0.25 + 0.75 * x[0]**3, 1))
 
 
-qs = RandomStrategy(pool=HyperCubePool(2, 20))
-# qs = RandomStrategy(dim=2)
-learner = ActiveLearner(query_strategy=qs)
+class Runner(object):
 
-for i in range(100):
-    y = f1(x)
-    learner.update(x, y)
+    def __init__(self, oracle):
+        self.oracle = oracle
 
-print(learner.posteriors)
-x = np.array([np.linspace(0, 1, 50), np.linspace(0, 1, 50)]).T
-# x = np.array([np.linspace(0, 1, 50)],).T
-learner.predict(x)
-learner.plot_predictions(x)
+    def run(self, learner):
+        """Query the oracle until the learner's budget runs out."""
+        while learner.budget > 0:
             x = learner.next_query()
+            y = self.oracle(x)
+            learner.update(x, y)
+            learner.budget -= 1
+
+        return {
+            "posterior": learner.posteriors,
+        }
+
+
+if __name__ == '__main__':
+
+    qs = RandomStrategy(pool=HyperCubePool(2, 20))
+    # qs = RandomStrategy(dim=2)
+    learner = ActiveLearner(query_strategy=qs, budget=20)
+    runner = Runner(oracle=f1)
+
+    results = runner.run(learner=learner)
+    print(results['posterior'])
+
+    x = np.array([np.linspace(0, 1, 50), np.linspace(0, 1, 50)]).T
+    # x = np.array([np.linspace(0, 1, 50)],).T
+    learner.predict(x)
+    learner.plot_predictions(x)

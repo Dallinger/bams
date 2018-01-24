@@ -34,6 +34,9 @@ class GPModel(Model):
     def log_likelihood(self, y):
         return self.gp.log_likelihood(y)
 
+    def __repr__(self):
+        return str(self.gp.kernel)
+
 
 class GrammarModels(object):
     """A collections of models from the grammar of kernels."""

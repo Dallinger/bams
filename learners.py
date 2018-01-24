@@ -11,7 +11,7 @@ from query_strategies import BAMS
 class ActiveLearner(object):
     """An active learner."""
 
-    def __init__(self, data=VectorData(), models=None, query_strategy=None):
+    def __init__(self, data=VectorData(), models=None, query_strategy=None, budget=20):
         self.data = data
 
         if not models:
@@ -22,6 +22,8 @@ class ActiveLearner(object):
             query_strategy = BAMS
         self.query_strategy = query_strategy
 
+        self.budget = budget
+
     def next_query(self):
         return self.query_strategy.next()
 
@@ -29,8 +31,6 @@ class ActiveLearner(object):
         self.data.update(x, y)
         for model in self.models:
             model.update(x, y)
-
-        return self.query_strategy.next()
 
     def __repr__(self):
         return 'models={}\nqs={}\ndata:\n{}'.format(
