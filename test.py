@@ -39,5 +39,5 @@ for i in range(100):
 print(learner.posteriors)
 x = np.array([np.linspace(0, 1, 50), np.linspace(0, 1, 50)]).T
 # x = np.array([np.linspace(0, 1, 50)],).T
-learner.predict(x, dim=0)
-learner.plot_predictions(x, dim=0)
+learner.predict(x)
+learner.plot_predictions(x)

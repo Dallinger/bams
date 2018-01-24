@@ -42,7 +42,6 @@ class ActiveLearner(object):
         computing log evidence of the models.
         """
         # Compute the log model evidence.
-        print(self.data.y.flatten())
         log_evidences = np.zeros(len(self.models))
         for i, model in enumerate(self.models):
             model.compute(self.data.x[:, 0].flatten(), yerr=0.1)
@@ -57,7 +56,7 @@ class ActiveLearner(object):
         """The maximum a posteriori model."""
         return self.models[np.argmax(self.posteriors)]
 
-    def predict(self, x, dim=0):
+    def predict(self, x):
         """TODO: Should we be doing some sort of model averaging?"""
         return self.map_model.predict(
             self.data.y.flatten(),
@@ -65,9 +64,9 @@ class ActiveLearner(object):
             return_var=True
         )
 
-    def plot_predictions(self, x, dim=0):
+    def plot_predictions(self, x):
         """Plot the learner's predictions."""
-        plt.scatter(self.data.x[:, dim], self.data.y)
-        (predictions, uncertainty) = self.predict(x, dim=dim)
-        plt.scatter(x[:, dim], predictions)
+        plt.scatter(self.data.x[:, 0], self.data.y)
+        (predictions, uncertainty) = self.predict(x)
+        plt.scatter(x[:, 0], predictions)
         plt.show()
