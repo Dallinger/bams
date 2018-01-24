@@ -5,7 +5,7 @@ import numpy as np
 
 from data import VectorData
 from models import GrammarModels
-from query_strategies import BAMS
+from query_strategies import BALD
 
 
 class ActiveLearner(object):
@@ -19,7 +19,7 @@ class ActiveLearner(object):
         self.models = models
 
         if not query_strategy:
-            query_strategy = BAMS
+            query_strategy = BALD
         self.query_strategy = query_strategy
 
         self.budget = budget

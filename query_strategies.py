@@ -49,30 +49,31 @@ class RandomStrategy(QueryStrategy):
         return 'RandomStrategy. Active_points={}.'.format(self.num_points)
 
 
-class BAMS(QueryStrategy):
+class BALD(QueryStrategy):
 
     def __init__(self, **kwargs):
         self.replacement = kwargs.get('replacement', False)
-        super(BAMS, self).__init__(**kwargs)
+        super(BALD, self).__init__(**kwargs)
 
     def score(self, point, models):
         # If there's no data, query at random.
-        if self.models == 0:
+        if models[0].data.x:
             return RandomStrategy().next()
 
-        for model in self.models:
-            # Compute the individual entropy.
+        for model in models:
+            # TODO: Compute the log evidence.
             pass
 
-        # Compute the model posterior.
+            # TODO: Compute the individual entropy.
+            pass
+
+        # TODO: Compute the model posterior.
         # posteriors = self.posteriors
 
-        # x_cand = np.random.rand(100)
-
-        # # # Compute the marginal expected entropy.
+        # # Compute the marginal expected entropy.
         # expected_marginal_entropy = self.mee(
-        #     self.data_x,
-        #     x_cand,
+        #     self.models[0].data.x,
+        #     self._hypercube,
         #     self.models,
         #     self.posteriors
         # )
