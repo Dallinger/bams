@@ -22,12 +22,14 @@ class ActiveLearner(object):
             query_strategy = BAMS
         self.query_strategy = query_strategy
 
+    def next_query(self):
+        return self.query_strategy.next()
+
     def update(self, x, y):
         self.data.update(x, y)
         for model in self.models:
             model.update(x, y)
 
-    def query(self):
         return self.query_strategy.next()
 
     def __repr__(self):

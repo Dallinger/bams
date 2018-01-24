@@ -32,7 +32,6 @@ qs = RandomStrategy(pool=HyperCubePool(2, 20))
 learner = ActiveLearner(query_strategy=qs)
 
 for i in range(100):
-    x = learner.query()
     y = f1(x)
     learner.update(x, y)
 
@@ -41,3 +40,4 @@ x = np.array([np.linspace(0, 1, 50), np.linspace(0, 1, 50)]).T
 # x = np.array([np.linspace(0, 1, 50)],).T
 learner.predict(x)
 learner.plot_predictions(x)
+            x = learner.next_query()
