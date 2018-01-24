@@ -1,15 +1,17 @@
 """Test script for BAMS port."""
 
 import numpy as np
+from active_learner import *
+from query_strategies import HyperCubePool, RandomStrategy
 
-import bams
+# import bams
 
 np.random.seed(5822646)
 
 
 def f1(x):
     """A test oracle function."""
-    return np.sin(x) + 0.2 * np.random.randn()
+    return np.sum(np.sin(x) + 0.2 * np.random.randn())
 
 
 def f2(x):
@@ -22,31 +24,35 @@ def f3(x):
     return max(0, min(0.25 + 0.75 * x**3, 1))
 
 
-learner = bams.Learner(
-    kernels=[
-        "LIN",
-        "PER",
-        "SE",
-        "RQ",
-        "M32",
-        "M52",
-        "E",
-        "ES2",
-        "K",
-        "DP",
-        "LG",
-        "POLY",
-    ],
-    depth=2,
-    query_strategy="random",
-)
+# learner = bams.Learner(
+#     kernels=[
+#         "LIN",
+#         "PER",
+#         "SE",
+#         "RQ",
+#         "M32",
+#         "M52",
+#         "E",
+#         "ES2",
+#         "K",
+#         "DP",
+#         "LG",
+#         "POLY",
+#     ],
+#     depth=2,
+#     query_strategy="random",
+# )
 
-for i in range(500):
+pool = HyperCubePool(2, 10)
+qs = RandomStrategy(pool)
+learner = ActiveLearner(query_strategy=qs)
+
+for i in range(10):
     x = learner.query()
     y = f1(x)
-    learner.train(x, y)
+    learner.update(x, y)
 
-y_predict = np.linspace(0, 1, 50)
-print(learner.predict(y_predict))
-learner.plot_predictions(y_predict)
-print(learner.map_model_kernel)
+# y_predict = np.linspace(0, 1, 50)
+# print(learner.predict(y_predict))
+# learner.plot_predictions(y_predict)
+# print(learner.map_model_kernel)
