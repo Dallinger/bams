@@ -25,7 +25,7 @@ class ActiveLearner(object):
         self.budget = budget
 
     def next_query(self):
-        return self.query_strategy.next()
+        return self.query_strategy.next(self.models)
 
     def update(self, x, y):
         self.data.update(x, y)

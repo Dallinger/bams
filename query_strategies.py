@@ -8,6 +8,7 @@ import sobol_seq
 
 
 class HyperCubePool(object):
+
     def __init__(self, dim, num_points):
         self.dim = dim
         self.num_points = num_points
@@ -30,9 +31,9 @@ class QueryStrategy(object):
         else:
             self.pool = HyperCubePool(dim, 100)
 
-    def next(self):
+    def next(self, models=None):
         """Select the point with the highest score."""
-        scores = np.array([self.score(point) for point in self.pool._hypercube])
+        scores = np.array([self.score(point, models) for point in self.pool._hypercube])
         return self.pool._hypercube[np.argmax(scores)]
 
     def score(self, point):
@@ -41,7 +42,7 @@ class QueryStrategy(object):
 
 class RandomStrategy(QueryStrategy):
 
-    def score(self, point):
+    def score(self, point, models):
         return random.random()
 
     def __repr__(self):
@@ -53,13 +54,11 @@ class BAMS(QueryStrategy):
     def __init__(self, **kwargs):
         self.replacement = kwargs.get('replacement', False)
         super(BAMS, self).__init__(**kwargs)
-        self.num_points = self.pool.num_points if self.pool else 0
-        self.active_points = [i for i in range(self.num_points)]
 
-    def next(self):
+    def score(self, point, models):
         # If there's no data, query at random.
         if self.models == 0:
-            return random.sample(self.active_points, 1)
+            return RandomStrategy().next()
 
         for model in self.models:
             # Compute the individual entropy.
@@ -80,11 +79,8 @@ class BAMS(QueryStrategy):
         #
         # # Compute the individual expected entropy.
         #
-        # # Compute bald.
+        # # Return bald.
         # bald = expected_marginal_entropy - expected_individual_entropy
-        #
-        # # Return the index where bald is maximized.
-        # return x_pool[np.argmax(bald)]
         raise NotImplementedError
 
     def mee(self, x_train, x_cand, models, model_posterior):  # marginal_model_entropy
@@ -118,11 +114,11 @@ class BAMS(QueryStrategy):
 
 class QBC(QueryStrategy):
 
-    def score(self):
+    def score(self, point, models):
         raise NotImplementedError
 
 
 class UncertaintySampling(QueryStrategy):
 
-    def score(self):
+    def score(self, point, models):
         raise NotImplementedError
