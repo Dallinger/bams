@@ -1,11 +1,18 @@
 import george
-import scipy.integrate as integrate
 import numpy as np
-from interfaces import Models
 
 
-class GrammarModels(Models):
-    """ A collections of models from the Grammar of kernels"""
+class Model(object):
+
+    def update(self, x, y):
+        raise NotImplementedError
+
+    def predict(self, x):
+        raise NotImplementedError
+
+
+class GrammarModels(object):
+    """A collections of models from the grammar of kernels."""
 
     def __init__(self, base_kernels=["LIN", "PER"], max_depth=2):
         self.max_depth = max_depth
@@ -55,57 +62,5 @@ class GrammarModels(Models):
                 for operator in operators:
                     for kernel in kernels:
                         models.append(operator(kernel[0](**kernel[1]), model))
-                        print(kernel[0], kernel[1])
 
         return models
-
-    def mee(self, x_train, x_cand, models, model_posterior):  # marginal_model_entropy
-        r = 4
-        # Compute predictions and means.
-        predictions_means = np.zeros((len(models), len(x_cand)))
-        predictions_stds = np.ones((len(models), len(x_cand)))
-        for i, model in enumerate(models):
-            (mean, var) = model.predict(self.data_y, x_cand, return_var=True)
-            predictions_means[i, :] = mean
-            predictions_stds[i, :] = np.sqrt(var)
-
-        # TODO: Compute min_vs, max_vs.
-        min_vs = np.zeros(len(models))
-        max_vs = np.zeros(len(models))
-
-        def entropy(x):
-            """From gpr_marginal_expected_entropy.m.
-
-            TODO: Implement entropy function.
-            """
-            return 0
-
-        mee = np.zeros(len(x_cand))
-        for i in range(len(x_cand)):
-            mee[i] = integrate.quad(entropy, min_vs[i], max_vs[i])[0]
-
-        return mee
-
-    @property
-    def posteriors(self):
-        # Compute the log model evidence.
-        log_evidences = np.zeros(len(self.models))
-        for i, model in enumerate(self.models):
-            model.compute(self.data_x, yerr=0.1)
-            log_evidences[i] = model.log_likelihood(self.data_y)
-
-        # Compute the model posteriors.
-        model_posterior = np.exp(log_evidences - np.max(log_evidences))
-        return model_posterior / np.sum(model_posterior)
-
-    def predict(self, x):
-        """Should we be doing some sort of model averaging?"""
-        return self.map_model.predict(self.data_y, x, return_var=True)
-
-    @property
-    def map_model(self):
-        return self.models[np.argmax(self.posteriors)]
-
-    @property
-    def map_model_kernel(self):
-        return self.kernels[np.argmax(self.posteriors)]

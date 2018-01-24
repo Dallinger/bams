@@ -1,9 +1,13 @@
-from interfaces import QueryStrategy
+"""Query strategies for a learner."""
+
+import random
+
+import numpy as np
+import scipy.integrate as integrate
 import sobol_seq
-from random import *
 
 
-class HyperCubePool():
+class HyperCubePool(object):
     def __init__(self, dim, num_points):
         self.dim = dim
         self.num_points = num_points
@@ -18,16 +22,27 @@ class HyperCubePool():
             self.num_points)
 
 
-class RandomStrategy(QueryStrategy):
+class QueryStrategy(object):
 
-    def __init__(self, pool=None):
-        self.pool = pool
-        self.num_points = pool.num_points if pool else 0
-        self.active_points = [i for i in range(self.num_points)]
+    def __init__(self, pool=None, dim=2):
+        if pool:
+            self.pool = pool
+        else:
+            self.pool = HyperCubePool(dim, 100)
 
     def next(self):
-        index = sample(self.active_points, 1)
-        return self.pool[index[0]]
+        """Select the point with the highest score."""
+        scores = np.array([self.score(point) for point in self.pool._hypercube])
+        return self.pool._hypercube[np.argmax(scores)]
+
+    def score(self, point):
+        raise NotImplementedError
+
+
+class RandomStrategy(QueryStrategy):
+
+    def score(self, point):
+        return random.random()
 
     def __repr__(self):
         return 'RandomStrategy. Active_points={}.'.format(self.num_points)
@@ -35,15 +50,16 @@ class RandomStrategy(QueryStrategy):
 
 class BAMS(QueryStrategy):
 
-    def __init__(self, pool=None, replacement=False):
-        self.num_points = pool.num_points if pool else 0
-        self.replacement = replacement
+    def __init__(self, **kwargs):
+        self.replacement = kwargs.get('replacement', False)
+        super(BAMS, self).__init__(**kwargs)
+        self.num_points = self.pool.num_points if self.pool else 0
         self.active_points = [i for i in range(self.num_points)]
 
     def next(self):
         # If there's no data, query at random.
         if self.models == 0:
-            return sample(self.active_points, 1)
+            return random.sample(self.active_points, 1)
 
         for model in self.models:
             # Compute the individual entropy.
@@ -71,10 +87,42 @@ class BAMS(QueryStrategy):
         # return x_pool[np.argmax(bald)]
         raise NotImplementedError
 
+    def mee(self, x_train, x_cand, models, model_posterior):  # marginal_model_entropy
+        # TODO: Figure out where this is most logically placed.
+        r = 4
+        # Compute predictions and means.
+        predictions_means = np.zeros((len(models), len(x_cand)))
+        predictions_stds = np.ones((len(models), len(x_cand)))
+        for i, model in enumerate(models):
+            (mean, var) = model.predict(self.data_y, x_cand, return_var=True)
+            predictions_means[i, :] = mean
+            predictions_stds[i, :] = np.sqrt(var)
+
+        # TODO: Compute min_vs, max_vs.
+        min_vs = np.zeros(len(models))
+        max_vs = np.zeros(len(models))
+
+        def entropy(x):
+            """From gpr_marginal_expected_entropy.m.
+
+            TODO: Implement entropy function.
+            """
+            return 0
+
+        mee = np.zeros(len(x_cand))
+        for i in range(len(x_cand)):
+            mee[i] = integrate.quad(entropy, min_vs[i], max_vs[i])[0]
+
+        return mee
+
 
 class QBC(QueryStrategy):
-    pass
+
+    def score(self):
+        raise NotImplementedError
 
 
 class UncertaintySampling(QueryStrategy):
-    pass
+
+    def score(self):
+        raise NotImplementedError

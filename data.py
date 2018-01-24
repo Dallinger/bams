@@ -1,8 +1,12 @@
-''' Classes for handling data'''
+"""Classes for handling data."""
 
-import numpy as np
 import matplotlib.pyplot as plt
-from interfaces import Data
+import numpy as np
+
+
+class Data(object):
+    def update(self, x, y):
+        raise NotImplemented
 
 
 class VectorData(Data):
