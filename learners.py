@@ -36,11 +36,16 @@ class ActiveLearner(object):
 
     @property
     def posteriors(self):
-        """Compute posterior probabilities of the models."""
+        """Compute posterior probabilities of the models.
+
+        TODO: Don't hardcode in the zeroth dimension of the input when
+        computing log evidence of the models.
+        """
         # Compute the log model evidence.
+        print(self.data.y.flatten())
         log_evidences = np.zeros(len(self.models))
         for i, model in enumerate(self.models):
-            model.compute(self.data.x.flatten(), yerr=0.1)
+            model.compute(self.data.x[:, 0].flatten(), yerr=0.1)
             log_evidences[i] = model.log_likelihood(self.data.y.flatten())
 
         # Compute the model posteriors.
@@ -52,17 +57,17 @@ class ActiveLearner(object):
         """The maximum a posteriori model."""
         return self.models[np.argmax(self.posteriors)]
 
-    def predict(self, x):
+    def predict(self, x, dim=0):
         """TODO: Should we be doing some sort of model averaging?"""
         return self.map_model.predict(
             self.data.y.flatten(),
-            x,
+            x[:, dim],
             return_var=True
         )
 
-    def plot_predictions(self, x):
+    def plot_predictions(self, x, dim=0):
         """Plot the learner's predictions."""
-        plt.scatter(self.data.x, self.data.y)
-        (predictions, uncertainty) = self.predict(x)
-        plt.scatter(x, predictions)
+        plt.scatter(self.data.x[:, dim], self.data.y)
+        (predictions, uncertainty) = self.predict(x, dim=dim)
+        plt.scatter(x[:, dim], predictions)
         plt.show()
