@@ -17,7 +17,7 @@ class VectorData(Data):
 
     def update(self, x, y):
         if self.x is None:
-            self.x, self.y = x, y
+            self.x, self.y = np.array([x,]), np.array([y,])
         else:
             self.x = np.vstack((self.x, x))
             self.y = np.vstack((self.y, y))
