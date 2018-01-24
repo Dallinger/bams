@@ -15,6 +15,10 @@ class Model(object):
 
 class GPModel(Model):
 
+    """TODO: Optimize hyperparameters.
+    http://george.readthedocs.io/en/latest/tutorials/hyper/#hyperparameter-optimization
+    """
+
     def __init__(self, kernel=None):
         self.kernel = kernel
         self.gp = george.GP(kernel)
