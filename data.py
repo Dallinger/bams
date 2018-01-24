@@ -5,8 +5,9 @@ import numpy as np
 
 
 class Data(object):
+
     def update(self, x, y):
-        raise NotImplemented
+        raise NotImplementedError
 
 
 class VectorData(Data):
@@ -17,15 +18,13 @@ class VectorData(Data):
 
     def update(self, x, y):
         if self.x is None:
-            self.x, self.y = np.array([x,]), np.array([y,])
+            self.x, self.y = np.array([x]), np.array([y])
         else:
             self.x = np.vstack((self.x, x))
             self.y = np.vstack((self.y, y))
 
     def plot(self):
         plt.scatter(self.x, self.y)
-        # (predictions, uncertainty) = self.predict(x)
-        # plt.scatter(x, predictions)
         plt.show()
 
     def __repr__(self):
