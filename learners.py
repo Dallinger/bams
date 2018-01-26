@@ -11,8 +11,12 @@ from query_strategies import BALD
 class ActiveLearner(object):
     """An active learner."""
 
-    def __init__(self, data=VectorData(), models=None, query_strategy=None, budget=20):
-        self.data = data
+    def __init__(self, data=None, models=None, query_strategy=None, budget=20):
+
+        if not data:
+            self.data = VectorData()
+        else:
+            self.data = data
 
         if not models:
             models = GrammarModels().models
