@@ -19,7 +19,8 @@ class ActiveLearner(object):
             self.data = data
 
         if not models:
-            models = GrammarModels().models
+            ndim = self.data.x.shape[1] if self.data.x else 1
+            models = GrammarModels(ndim=ndim).models
         self.models = models
 
         if not query_strategy:

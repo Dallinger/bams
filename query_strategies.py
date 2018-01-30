@@ -33,7 +33,8 @@ class QueryStrategy(object):
 
     def next(self, models=None):
         """Select the point with the highest score."""
-        scores = np.array([self.score(point, models) for point in self.pool._hypercube])
+        scores = np.array([self.score(point, models)
+                           for point in self.pool._hypercube])
         return self.pool._hypercube[np.argmax(scores)]
 
     def score(self, point):
@@ -44,9 +45,6 @@ class RandomStrategy(QueryStrategy):
 
     def score(self, point, models):
         return random.random()
-
-    def __repr__(self):
-        return 'RandomStrategy. Active_points={}.'.format(self.num_points)
 
 
 class BALD(QueryStrategy):

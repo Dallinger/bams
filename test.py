@@ -6,6 +6,7 @@ import numpy as np
 
 from learners import ActiveLearner
 from query_strategies import HyperCubePool, RandomStrategy
+from models import SimpleModelBag
 
 s = 5822646
 random.seed(s)
@@ -47,15 +48,21 @@ class Runner(object):
 
 if __name__ == '__main__':
 
-    qs = RandomStrategy(pool=HyperCubePool(2, 20))
-    # qs = RandomStrategy(dim=2)
-    learner = ActiveLearner(query_strategy=qs, budget=20)
+    ndim = 2
+    pool_size = 200
+    budget = 20
+    pool = HyperCubePool(ndim, pool_size)
+    qs = RandomStrategy(pool=pool)
+    models = SimpleModelBag(ndim=ndim)
+    learner = ActiveLearner(models=models, query_strategy=qs, budget=budget)
+
     runner = Runner(oracle=f1)
 
     results = runner.run(learner=learner)
     print(results['posterior'])
 
     x = np.array([np.linspace(0, 1, 50), np.linspace(0, 1, 50)]).T
-    # x = np.array([np.linspace(0, 1, 50)],).T
     learner.predict(x)
+
+    gp = learner.models[1]
     learner.plot_predictions(x)
