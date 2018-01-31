@@ -35,6 +35,17 @@ class GPModel(Model):
     def log_likelihood(self, y):
         return self.gp.log_likelihood(y)
 
+    def log_evidence(self):
+        n = len(data.y)     # number of observations
+        k = len(gp.parameter_vector)    # number of parameters
+        # Negative of BIC - Bayesian information criterion
+        return 2 * self.log_likelihood(self, y) - k * np.log(n)
+
+    def entropy(self, points):
+        half_log_2pi = 0.9189385332046727
+        (mean, covariance) = self.predict(points)
+        return 1 / 2 + half_log_2pi + np.log(covariance) / 2
+
     def __repr__(self):
         return str(self.gp.kernel)
 
@@ -53,6 +64,32 @@ class SimpleModelBag(object):
     def update(self):
         for model in self._models:
             model.update()
+
+    def marginal_entropy(self, points, model_posterior):
+        r = 4
+        # Compute predictions and means.
+        predictions_means = np.zeros((len(models), len(points)))
+        predictions_stds = np.ones((len(models), len(points)))
+        for i, model in enumerate(models):
+            (mean, var) = model.predict(points)
+            predictions_means[i, :] = mean
+            predictions_stds[i, :] = np.sqrt(var)
+
+        # TODO: Compute min_vs, max_vs.
+        min_vs = np.zeros(len(models))
+        max_vs = np.zeros(len(models))
+
+        def entropy(x):
+            """From gpr_marginal_expected_entropy.m.
+            TODO: Implement entropy function.
+            """
+            return 0
+
+        entropy = np.zeros(len(pool))
+        for i in range(len(pool)):
+            entropy[i] = integrate.quad(entropy, min_vs[i], max_vs[i])[0]
+
+        return entropy
 
     def __getitem__(self, index):
         return self._models[index]

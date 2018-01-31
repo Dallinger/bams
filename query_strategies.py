@@ -50,6 +50,14 @@ class RandomStrategy(QueryStrategy):
 
 
 class BALD(QueryStrategy):
+    """ Bayesian Active Learning by Disagreement (BALD)
+        is a score function based on mutual information.
+        Here we use the formulation presented in [1], which
+        is the mutual information applied to model selection
+        I(y; M | x, D) = H[y|x,D] - E_M[H[y|x,D,M]],
+        where the first term is the model marginalized entropy
+        and the second term is the expected entropy of each model
+    """
 
     def __init__(self, **kwargs):
         self.replacement = kwargs.get('replacement', False)
@@ -60,20 +68,26 @@ class BALD(QueryStrategy):
         if not models.data:
             return RandomStrategy().next()
 
+        # For each model compute (an approximation to)
+        # the model evdience and H[y|x,D,M]
         log_evidences = np.zeros(len(models))
         model_entropies = np.zeros((len(points), len(models)))
         for i, model in enumerate(models):
             log_evidences[i] = model.log_evidence()
-            model_entropies[i, :] = model.entropy()
+            model_entropies[i, :] = model.entropy(points)
 
         # Compute the model posterior
         model_posterior = np.exp(log_evidences - np.max(log_evidences))
 
-        # Compute the model-marginal entropy.
-        marginal_entropies = model.marginal_entropy(self.pool, model_posterior)
+        # Compute the expected model entropy
+        expected_model_entropies = model_entropies * model_posterior
 
-        bald = marginal_entropies - model_entropies
-        return bald
+        # Compute the model-marginal entropy
+        marginal_entropies = models.marginal_entropy(
+            self.pool, model_posterior)
+
+        # BALD is H[y | x, D] - E_model[H[y |x,D,M] ]
+        return marginal_entropies - expected_model_entropies
 
 
 class QBC(QueryStrategy):
