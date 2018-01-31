@@ -17,6 +17,7 @@ class GPModel(Model):
 
     """TODO: Optimize hyperparameters.
     http://george.readthedocs.io/en/latest/tutorials/hyper/#hyperparameter-optimization
+    TODO: add error if no data is attached
     """
 
     def __init__(self, data=None, kernel=None, yerr=0.1):
@@ -26,25 +27,24 @@ class GPModel(Model):
         self.yerr = yerr
 
     def update(self):
-        if self.data:
-            self.gp.compute(self.data.x, yerr=self.yerr)
+        self.gp.compute(self.data.x, yerr=self.yerr)
 
     def predict(self, x):
         return self.gp.predict(self.data.y, x, return_var=True)
 
-    def log_likelihood(self, y):
-        return self.gp.log_likelihood(y)
+    def log_likelihood(self):
+        return self.gp.log_likelihood(self.data.y)
 
     def log_evidence(self):
-        n = len(data.y)     # number of observations
-        k = len(gp.parameter_vector)    # number of parameters
+        n = len(self.data.y)     # number of observations
+        k = len(self.gp.parameter_vector)    # number of parameters
         # Negative of BIC - Bayesian information criterion
-        return 2 * self.log_likelihood(self, y) - k * np.log(n)
+        return 2 * self.log_likelihood() - k * np.log(n)
 
     def entropy(self, points):
         half_log_2pi = 0.9189385332046727
         (mean, covariance) = self.predict(points)
-        return 1 / 2 + half_log_2pi + np.log(covariance) / 2
+        return 0.5 + half_log_2pi + np.log(covariance) * 0.5
 
     def __repr__(self):
         return str(self.gp.kernel)
@@ -60,16 +60,30 @@ class SimpleModelBag(object):
         self.data = data
         self.kernels = [k1, k2, k3]
         self._models = [GPModel(kernel=k, data=data) for k in self.kernels]
+        self.num_models = len(self.kernels)
 
     def update(self):
         for model in self._models:
             model.update()
 
+    def posteriors(self):
+        """Compute posterior probabilities of the models.
+        """
+        # Compute the log model evidence.
+        log_evidences = np.zeros(self.num_models)
+        for i, model in enumerate(self._models):
+            model.update()
+            log_evidences[i] = model.log_evidence()
+
+        # Compute the model posteriors.
+        model_posterior = np.exp(log_evidences - np.max(log_evidences))
+        return model_posterior / np.sum(model_posterior)
+
     def marginal_entropy(self, points, model_posterior):
         r = 4
         # Compute predictions and means.
-        predictions_means = np.zeros((len(models), len(points)))
-        predictions_stds = np.ones((len(models), len(points)))
+        predictions_means = np.zeros((self.num_models, len(points)))
+        predictions_stds = np.ones((self.num_models, len(points)))
         for i, model in enumerate(models):
             (mean, var) = model.predict(points)
             predictions_means[i, :] = mean
@@ -85,8 +99,8 @@ class SimpleModelBag(object):
             """
             return 0
 
-        entropy = np.zeros(len(pool))
-        for i in range(len(pool)):
+        entropy = np.zeros(len(points))
+        for i in range(len(points)):
             entropy[i] = integrate.quad(entropy, min_vs[i], max_vs[i])[0]
 
         return entropy

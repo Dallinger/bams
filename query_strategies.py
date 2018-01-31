@@ -84,7 +84,7 @@ class BALD(QueryStrategy):
 
         # Compute the model-marginal entropy
         marginal_entropies = models.marginal_entropy(
-            self.pool, model_posterior)
+            points, model_posterior)
 
         # BALD is H[y | x, D] - E_model[H[y |x,D,M] ]
         return marginal_entropies - expected_model_entropies
