@@ -21,7 +21,7 @@ class VectorData(Data):
             self.x, self.y = np.array([x]), np.array([y])
         else:
             self.x = np.vstack((self.x, x))
-            self.y = np.vstack((self.y, y))
+            self.y = np.concatenate((self.y, [y]))
 
     def plot(self):
         plt.scatter(self.x, self.y)
@@ -31,4 +31,4 @@ class VectorData(Data):
         if self.x is None:
             return 'x : [] and y : []'
         else:
-            return '{}'.format(np.hstack((self.x, self.y)))
+            return 'features x:\n{}\n outcomes y:\n{}'.format(self.x, self.y)

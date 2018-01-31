@@ -1,7 +1,5 @@
 """Query strategies for a learner."""
 
-import random
-
 import numpy as np
 import scipy.integrate as integrate
 import sobol_seq
@@ -16,6 +14,9 @@ class HyperCubePool(object):
 
     def __getitem__(self, index):
         return self._hypercube[index]
+
+    def __len__(self):
+        return self.num_points
 
     def __repr__(self):
         return 'Pool (Sobol). Dim={}, num_points={}'.format(
@@ -33,7 +34,9 @@ class QueryStrategy(object):
 
     def next(self, models=None):
         """Select the point with the highest score."""
-        scores = np.array([self.score(point, models) for point in self.pool._hypercube])
+        # scores = np.array([self.score(point, models)
+        #                    for point in self.pool._hypercube])
+        scores = np.array(self.score(self.pool, models))
         return self.pool._hypercube[np.argmax(scores)]
 
     def score(self, point):
@@ -42,75 +45,49 @@ class QueryStrategy(object):
 
 class RandomStrategy(QueryStrategy):
 
-    def score(self, point, models):
-        return random.random()
-
-    def __repr__(self):
-        return 'RandomStrategy. Active_points={}.'.format(self.num_points)
+    def score(self, points, models):
+        return np.random.rand(len(points))
 
 
 class BALD(QueryStrategy):
+    """ Bayesian Active Learning by Disagreement (BALD)
+        is a score function based on mutual information.
+        Here we use the formulation presented in [1], which
+        is the mutual information applied to model selection
+        I(y; M | x, D) = H[y|x,D] - E_M[H[y|x,D,M]],
+        where the first term is the model marginalized entropy
+        and the second term is the expected entropy of each model
+    """
 
     def __init__(self, **kwargs):
         self.replacement = kwargs.get('replacement', False)
         super(BALD, self).__init__(**kwargs)
 
-    def score(self, point, models):
+    def score(self, points, models):
         # If there's no data, query at random.
-        if models[0].data.x:
+        if not models.data:
             return RandomStrategy().next()
 
-        for model in models:
-            # TODO: Compute the log evidence.
-            pass
-
-            # TODO: Compute the individual entropy.
-            pass
-
-        # TODO: Compute the model posterior.
-        # posteriors = self.posteriors
-
-        # # Compute the marginal expected entropy.
-        # expected_marginal_entropy = self.mee(
-        #     self.models[0].data.x,
-        #     self._hypercube,
-        #     self.models,
-        #     self.posteriors
-        # )
-        #
-        # # Compute the individual expected entropy.
-        #
-        # # Return bald.
-        # bald = expected_marginal_entropy - expected_individual_entropy
-        raise NotImplementedError
-
-    def mee(self, x_train, x_cand, models, model_posterior):  # marginal_model_entropy
-        # TODO: Figure out where this is most logically placed.
-        r = 4
-        # Compute predictions and means.
-        predictions_means = np.zeros((len(models), len(x_cand)))
-        predictions_stds = np.ones((len(models), len(x_cand)))
+        # For each model compute (an approximation to)
+        # the model evdience and H[y|x,D,M]
+        log_evidences = np.zeros(len(models))
+        model_entropies = np.zeros((len(points), len(models)))
         for i, model in enumerate(models):
-            (mean, var) = model.predict(self.data_y, x_cand, return_var=True)
-            predictions_means[i, :] = mean
-            predictions_stds[i, :] = np.sqrt(var)
+            log_evidences[i] = model.log_evidence()
+            model_entropies[i, :] = model.entropy(points)
 
-        # TODO: Compute min_vs, max_vs.
-        min_vs = np.zeros(len(models))
-        max_vs = np.zeros(len(models))
+        # Compute the model posterior
+        model_posterior = np.exp(log_evidences - np.max(log_evidences))
 
-        def entropy(x):
-            """From gpr_marginal_expected_entropy.m.
+        # Compute the expected model entropy
+        expected_model_entropies = model_entropies * model_posterior
 
-            TODO: Implement entropy function.
-            """
-            return 0
+        # Compute the model-marginal entropy
+        marginal_entropies = models.marginal_entropy(
+            points, model_posterior)
 
-        mee = np.zeros(len(x_cand))
-        for i in range(len(x_cand)):
-            mee[i] = integrate.quad(entropy, min_vs[i], max_vs[i])[0]
-
-        return mee
+        # BALD is H[y | x, D] - E_model[H[y |x,D,M] ]
+        return marginal_entropies - expected_model_entropies
 
 
 class QBC(QueryStrategy):
