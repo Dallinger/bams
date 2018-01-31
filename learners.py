@@ -34,8 +34,7 @@ class ActiveLearner(object):
 
     def update(self, x, y):
         self.data.update(x, y)
-        for model in self.models:
-            model.update(x, y)
+        self.models.update()
 
     def __repr__(self):
         return 'models={}\nqs={}\ndata:\n{}'.format(

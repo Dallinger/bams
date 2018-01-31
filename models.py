@@ -6,7 +6,7 @@ from data import VectorData
 
 class Model(object):
 
-    def update(self, x, y):
+    def update(self):
         raise NotImplementedError
 
     def predict(self, x):
@@ -19,28 +19,17 @@ class GPModel(Model):
     http://george.readthedocs.io/en/latest/tutorials/hyper/#hyperparameter-optimization
     """
 
-    def __init__(self, kernel=None):
+    def __init__(self, data=None, kernel=None, yerr=0.1):
         self.kernel = kernel
         self.gp = george.GP(kernel)
-        self.data = VectorData()
+        self.data = data
+        self.yerr = yerr
 
-    def add_new_data(self, x, y):
-        self.data.update(x, y)
-        #self.gp.compute(self.data.x[:, 0].flatten(), yerr=0.1)
-
-    def precompute(self):
-        self.gp.compute(self.data.x, yerr=0.1)
-
-    def update(self, x, y):
-        self.add_new_data(x, y)
-        self.precompute()
+    def update(self):
+        if self.data:
+            self.gp.compute(self.data.x, yerr=self.yerr)
 
     def predict(self, x):
-        # return self.gp.predict(
-        #     self.data.y.flatten(),
-        #     x[:, 0],
-        #     return_var=True
-        # )
         return self.gp.predict(self.data.y, x, return_var=True)
 
     def log_likelihood(self, y):
@@ -53,12 +42,17 @@ class GPModel(Model):
 class SimpleModelBag(object):
     """A simple collection of models: SE, Mater32 and LIN"""
 
-    def __init__(self, ndim=1):
+    def __init__(self, data=None, ndim=1):
         k1 = george.kernels.ExpSquaredKernel(metric=1.0, ndim=ndim)
         k2 = george.kernels.Matern32Kernel(metric=1.0, ndim=ndim)
         k3 = george.kernels.LinearKernel(order=1, log_gamma2=2, ndim=ndim)
+        self.data = data
         self.kernels = [k1, k2, k3]
-        self._models = [GPModel(kernel=k) for k in self.kernels]
+        self._models = [GPModel(kernel=k, data=data) for k in self.kernels]
+
+    def update(self):
+        for model in self._models:
+            model.update()
 
     def __getitem__(self, index):
         return self._models[index]
