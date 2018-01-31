@@ -1,6 +1,6 @@
 import george
 import numpy as np
-
+from scipy import integrate
 from data import VectorData
 
 
@@ -77,33 +77,43 @@ class SimpleModelBag(object):
 
         # Compute the model posteriors.
         model_posterior = np.exp(log_evidences - np.max(log_evidences))
-        return model_posterior / np.sum(model_posterior)
+        models_poster = model_posterior / np.sum(model_posterior)
+        return model_posterior
 
     def marginal_entropy(self, points, model_posterior):
-        r = 4
-        # Compute predictions and means.
-        predictions_means = np.zeros((self.num_models, len(points)))
-        predictions_stds = np.ones((self.num_models, len(points)))
-        for i, model in enumerate(models):
+
+        # Compute predictions and means for the test points
+        num_models = self.num_models
+        means = np.zeros((num_models, len(points)))
+        stds = np.ones((num_models, len(points)))
+        for i, model in enumerate(self._models):
+            model.update()
             (mean, var) = model.predict(points)
-            predictions_means[i, :] = mean
-            predictions_stds[i, :] = np.sqrt(var)
+            means[i, :] = mean
+            stds[i, :] = np.sqrt(var)
 
-        # TODO: Compute min_vs, max_vs.
-        min_vs = np.zeros(len(models))
-        max_vs = np.zeros(len(models))
+        # compute an upper and lower bounds for y
+        max_range = 4
+        upper_values = means.max(0) + max_range * stds.max(0)
+        lower_values = means.min(0) - max_range * stds.max(0)
 
-        def entropy(x):
-            """From gpr_marginal_expected_entropy.m.
-            TODO: Implement entropy function.
-            """
-            return 0
+        # compute the entropy of a mixture of Gaussians for a single y
+        def entropy(y, mu, sigma, model_posterior):
+            sqrt_2pi = 2.5066282746310002
+            prob = np.exp(-0.5 * ((y - mu) / sigma) ** 2) / (sqrt_2pi * sigma)
+            prob = np.dot(model_posterior, prob)
+            eps = np.spacing(1)
+            return -prob * np.log(prob + eps)
 
-        entropy = np.zeros(len(points))
+        # numerically compute the entropy of y for each test point
+        y_entropy = np.zeros(len(points))
         for i in range(len(points)):
-            entropy[i] = integrate.quad(entropy, min_vs[i], max_vs[i])[0]
+            def func(x):
+                return entropy(x, means[:, i], stds[:, i], model_posterior)
+            y_entropy[i] = integrate.quad(func, lower_values[i],
+                                          upper_values[i])[0]
 
-        return entropy
+        return y_entropy
 
     def __getitem__(self, index):
         return self._models[index]
