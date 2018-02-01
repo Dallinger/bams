@@ -150,12 +150,12 @@ class GrammarModels(object):
             means[i, :] = mean
             stds[i, :] = np.sqrt(var)
 
-        # compute an upper and lower bounds for y
+        # Compute an upper and lower bounds for y
         max_range = 4
         upper_values = means.max(0) + max_range * stds.max(0)
         lower_values = means.min(0) - max_range * stds.max(0)
 
-        # compute the entropy of a mixture of Gaussians for a single y
+        # Compute the entropy of a mixture of Gaussians for a single y
         def entropy(y, mu, sigma, model_posterior):
             sqrt_2pi = 2.5066282746310002
             prob = np.exp(-0.5 * ((y - mu) / sigma) ** 2) / (sqrt_2pi * sigma)
@@ -163,13 +163,16 @@ class GrammarModels(object):
             eps = np.spacing(1)
             return -prob * np.log(prob + eps)
 
-        # numerically compute the entropy of y for each test point
+        # Numerically compute the entropy of y for each test point
         y_entropy = np.zeros(len(points))
         for i in range(len(points)):
             def func(x):
                 return entropy(x, means[:, i], stds[:, i], model_posterior)
-            y_entropy[i] = integrate.quad(func, lower_values[i],
-                                          upper_values[i])[0]
+            y_entropy[i] = integrate.quad(
+                func,
+                lower_values[i],
+                upper_values[i]
+            )[0]
 
         return y_entropy
 
