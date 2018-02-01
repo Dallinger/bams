@@ -6,8 +6,8 @@ import numpy as np
 
 from learners import ActiveLearner
 from query_strategies import HyperCubePool, RandomStrategy
-from models import SimpleModelBag
 from data import VectorData
+from models import GrammarModels
 
 
 s = 5822646
@@ -61,7 +61,6 @@ if __name__ == '__main__':
 
     pool = HyperCubePool(ndim, pool_size)
     qs = RandomStrategy(pool=pool)
-    models = SimpleModelBag(ndim=ndim, data=data)
 
     learner = ActiveLearner(data=data,
                             models=models,
