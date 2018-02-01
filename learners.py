@@ -1,5 +1,7 @@
 """Learners."""
 
+import sys
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -11,16 +13,29 @@ from query_strategies import BALD
 class ActiveLearner(object):
     """An active learner."""
 
-    def __init__(self, data=None, models=None, query_strategy=None, budget=20):
+    def __init__(self, data=None, models=None, query_strategy=None,
+                 budget=sys.maxsize, base_kernels=None, max_depth=2):
 
         if not data:
             self.data = VectorData()
         else:
             self.data = data
 
+        if models and base_kernels:
+            raise ValueError("Do not specify both models AND base kernels.")
+
         if not models:
             ndim = self.data.x.shape[1] if self.data.x else 1
-            models = GrammarModels(ndim=ndim).models
+            if base_kernels:
+                models = GrammarModels(
+                    ndim=ndim,
+                    base_kernels=base_kernels,
+                    max_depth=max_depth,
+                    data=self.data
+                )
+            else:
+                models = GrammarModels(ndim=ndim, data=self.data)
+
         self.models = models
 
         if not query_strategy:
