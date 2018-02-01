@@ -5,9 +5,10 @@ import random
 import numpy as np
 
 from learners import ActiveLearner
-from query_strategies import HyperCubePool, RandomStrategy
-from data import VectorData
-from models import GrammarModels
+from query_strategies import (
+    HyperCubePool,
+    RandomStrategy,
+)
 
 
 s = 5822646
@@ -30,47 +31,41 @@ def f3(x):
     return max(0, min(0.25 + 0.75 * x[0]**3, 1))
 
 
-class Runner(object):
-
-    def __init__(self, oracle):
-        self.oracle = oracle
-
-    def run(self, learner):
-        """Query the oracle until the learner's budget runs out."""
-        while learner.budget > 0:
-            x = learner.next_query()
-            y = self.oracle(x)
-            learner.update(x, y)
-            learner.budget -= 1
-
-        return {
-            "posterior": learner.posteriors,
-        }
-
-
 if __name__ == '__main__':
 
-    # Initial fake data
-    x = np.sort(np.random.rand(5, 2))
-    y = np.sin(x).sum(axis=1)
+    """DEMO 1."""
 
-    ndim = 2
+    ndim = 1
     pool_size = 200
-    budget = 20
-    data = VectorData(x, y)
+    budget = 50
 
     pool = HyperCubePool(ndim, pool_size)
     qs = RandomStrategy(pool=pool)
 
-    learner = ActiveLearner(data=data,
-                            models=models,
-                            query_strategy=qs,
-                            budget=budget)
+    learner = ActiveLearner(
+        query_strategy=qs,
+        budget=budget,
+        base_kernels=["PER", "K", "LIN"],
+        max_depth=3,
+    )
 
-    runner = Runner(oracle=f1)
+    print(learner.models)
 
-    results = runner.run(learner=learner)
-    print(results['posterior'])
+    # TODO: Don't raise exception when there is no data — use prior.
 
-    x = np.array([np.linspace(0, 1, 50), np.linspace(0, 1, 50)]).T
+    learner.learn(oracle=f1)
+
+    # # Alternative API for use in external experiment scripts.
+    # for i in range(20):
+    #     x = learner.next_query()
+    #     y = f2(x)
+    #     learner.update(x, y)
+
+    print(learner.posteriors)
+    print(learner.map_model)
+
+    # Plot predictions
+    x = np.array([np.linspace(0, 1, 50)]).T
     learner.plot_predictions(x)
+
+# TODO: Test that when candidate models are identical, the posteriors match.
