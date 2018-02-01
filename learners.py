@@ -14,12 +14,14 @@ class ActiveLearner(object):
     """An active learner."""
 
     def __init__(self, data=None, models=None, query_strategy=None,
-                 budget=sys.maxsize, base_kernels=None, max_depth=2):
+                 budget=sys.maxsize, base_kernels=None, max_depth=2, ndim=2):
 
         if not data:
             self.data = VectorData()
+            self.ndim = ndim
         else:
             self.data = data
+            self.ndim = self.data.x.shape[1]
 
         if models and base_kernels:
             raise ValueError("Do not specify both models AND base kernels.")
@@ -85,11 +87,11 @@ class ActiveLearner(object):
         """TODO: Should we be doing some sort of model averaging?"""
         return self.map_model.predict(x)
 
-    def plot_predictions(self, x):
+    def plot_predictions(self, x, dim=0):
         """Plot the learner's predictions."""
-        plt.scatter(self.data.x[:, 0], self.data.y)
+        plt.scatter(self.data.x[:, dim], self.data.y)
         (predictions, uncertainty) = self.predict(x)
-        plt.scatter(x[:, 0], predictions)
+        plt.scatter(x[:, dim], predictions)
         plt.ylim([0, 1])
         plt.xlim([0, 1])
         plt.show()

@@ -28,14 +28,14 @@ def f2(x):
 
 def f3(x):
     """Define a third test oracle function."""
-    return max(0, min(0.25 + 0.75 * x[0]**3, 1))
+    return max(0, min(0.25 + 0.75 * x[2]**3, 1))
 
 
 if __name__ == '__main__':
 
     """DEMO 1."""
 
-    ndim = 1
+    ndim = 3
     pool_size = 200
     budget = 50
 
@@ -45,15 +45,16 @@ if __name__ == '__main__':
     learner = ActiveLearner(
         query_strategy=qs,
         budget=budget,
-        base_kernels=["PER", "K", "LIN"],
-        max_depth=3,
+        base_kernels=["PER", "LIN"],
+        max_depth=2,
+        ndim=ndim,
     )
 
     print(learner.models)
 
     # TODO: Don't raise exception when there is no data — use prior.
 
-    learner.learn(oracle=f1)
+    learner.learn(oracle=f3)
 
     # # Alternative API for use in external experiment scripts.
     # for i in range(20):
@@ -65,7 +66,8 @@ if __name__ == '__main__':
     print(learner.map_model)
 
     # Plot predictions
-    x = np.array([np.linspace(0, 1, 50)]).T
-    learner.plot_predictions(x)
+    # x = np.array([np.linspace(0, 1, 50)]).T
+    x = np.random.rand(50, ndim)
+    learner.plot_predictions(x, dim=2)
 
 # TODO: Test that when candidate models are identical, the posteriors match.

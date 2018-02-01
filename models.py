@@ -60,17 +60,13 @@ class GrammarModels(object):
     def __init__(self, base_kernels=["LIN", "PER", "K"], ndim=1, max_depth=2, data=None):
         self.max_depth = max_depth
         self.base_kernels = base_kernels
-        self.kernels = self.build_kernels(self.base_kernels, ndim)
+        self.kernels = self._build_kernels(self.base_kernels, ndim)
         self.data = data
         self._models = [GPModel(kernel=k, data=self.data) for k in self.kernels]
 
-    def build_kernels(self, kernel_names, ndim=1):
-        # TODO as suggestion: change for namedtuple
-        #      fix kernel_lookup K_d where K is the kernel name and
-        #      d is the dimension
-        # TODO: Remove duplicates due to commutativity of + and *.
-
-        kernel_lookup = {
+    @property
+    def _kernel_lookup(self):
+        return {
             "RQ": (george.kernels.RationalQuadraticKernel,
                    {"metric": 5.0, "log_alpha": 2}),
             "M32": (george.kernels.Matern32Kernel, {"metric": 5.0}),
@@ -90,7 +86,11 @@ class GrammarModels(object):
                      {"order": 2, "log_sigma2": 2}),
         }
 
-        kernels = [kernel_lookup[name] for name in kernel_names]
+    def _build_kernels(self, kernel_names, ndim=1):
+        # TODO as suggestion: change for namedtuple
+        # TODO: Remove duplicates due to commutativity of + and *.
+
+        kernels = [self._kernel_lookup[name] for name in kernel_names]
 
         operators = [
             george.kernels.Product,
@@ -98,17 +98,26 @@ class GrammarModels(object):
         ]
 
         models = []
+
         # Add base kernels.
         for kernel in kernels:
-            models.append(kernel[0](**kernel[1], ndim=ndim))
+            for dim in range(ndim):
+                models.append(kernel[0](**kernel[1], ndim=ndim, axes=dim))
 
-        # Add all compositions up to the max depth.
+        # Add all compositions of the base kernels up to the max depth.
         for _ in range(1, self.max_depth):
             previous_level_models = models[:]
             for model in previous_level_models:
                 for operator in operators:
                     for kernel in kernels:
-                        models.append(operator(kernel[0](**kernel[1]), model))
+                        for dim in range(ndim):
+                            models.append(
+                                operator(
+                                    kernel[0](
+                                        **kernel[1],
+                                        ndim=ndim,
+                                        axes=dim
+                                    ), model))
 
         return models
 
