@@ -117,15 +117,14 @@ class GrammarModels(object):
             model.update()
 
     def posteriors(self):
-        """Compute posterior probabilities of the models.
-        """
-        # Compute the log model evidence.
-        log_evidences = np.zeros(self.num_models)
+        """Compute posterior probabilities of the models."""
+        # Compute log model evidence.
+        log_evidences = np.zeros(len(self._models))
         for i, model in enumerate(self._models):
             model.update()
             log_evidences[i] = model.log_evidence()
 
-        # Compute the model posteriors.
+        # Compute model posteriors.
         model_posterior = np.exp(log_evidences - np.max(log_evidences))
         model_posterior = model_posterior / np.sum(model_posterior)
         return model_posterior
