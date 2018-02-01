@@ -27,7 +27,8 @@ class GPModel(Model):
         self.yerr = yerr
 
     def update(self):
-        self.gp.compute(self.data.x, yerr=self.yerr)
+        if self.data:
+            self.gp.compute(self.data.x, yerr=self.yerr)
 
     def predict(self, x):
         return self.gp.predict(self.data.y, x, return_var=True)
@@ -36,7 +37,10 @@ class GPModel(Model):
         return self.gp.log_likelihood(self.data.y)
 
     def log_evidence(self):
-        n = len(self.data.y)     # number of observations
+        if self.data:
+            n = len(self.data.y)     # number of observations
+        else:
+            n = 1
         k = len(self.gp.parameter_vector)    # number of parameters
         # Negative of BIC - Bayesian information criterion
         return 2 * self.log_likelihood() - k * np.log(n)
