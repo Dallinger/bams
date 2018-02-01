@@ -90,4 +90,6 @@ class ActiveLearner(object):
         plt.scatter(self.data.x[:, 0], self.data.y)
         (predictions, uncertainty) = self.predict(x)
         plt.scatter(x[:, 0], predictions)
+        plt.ylim([0, 1])
+        plt.xlim([0, 1])
         plt.show()
