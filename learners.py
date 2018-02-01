@@ -30,17 +30,32 @@ class ActiveLearner(object):
         self.budget = budget
 
     def next_query(self):
+        """Select a point to query using the learner's query strategy."""
         return self.query_strategy.next(self.models)
 
+    def query(self, oracle, point):
+        """Query the oracle at the given point."""
+        self.budget -= 1
+        return oracle(point)
+
     def update(self, x, y):
+        """Store an observation and update the models."""
         self.data.update(x, y)
         self.models.update()
+
+    def learn(self, oracle):
+        """Query the oracle until the budget is depleted."""
+        while self.budget > 0:
+            x = self.next_query()
+            y = self.query(oracle, x)
+            self.update(x, y)
 
     def __repr__(self):
         return 'models={}\nqs={}\ndata:\n{}'.format(
             self.models,
             self.query_strategy,
-            self.data)
+            self.data
+        )
 
     @property
     def posteriors(self):
