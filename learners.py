@@ -27,10 +27,9 @@ class ActiveLearner(object):
             raise ValueError("Do not specify both models AND base kernels.")
 
         if not models:
-            ndim = self.data.x.shape[1] if self.data.x else 1
             if base_kernels:
                 models = GrammarModels(
-                    ndim=ndim,
+                    ndim=self.ndim,
                     base_kernels=base_kernels,
                     max_depth=max_depth,
                     data=self.data
