@@ -77,7 +77,7 @@ class SimpleModelBag(object):
 
         # Compute the model posteriors.
         model_posterior = np.exp(log_evidences - np.max(log_evidences))
-        models_poster = model_posterior / np.sum(model_posterior)
+        model_posterior = model_posterior / np.sum(model_posterior)
         return model_posterior
 
     def marginal_entropy(self, points, model_posterior):
