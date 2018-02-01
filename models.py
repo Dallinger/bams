@@ -141,9 +141,8 @@ class GrammarModels(object):
     def marginal_entropy(self, points, model_posterior):
 
         # Compute predictions and means for the test points
-        num_models = self.num_models
-        means = np.zeros((num_models, len(points)))
-        stds = np.ones((num_models, len(points)))
+        means = np.zeros((len(self._models), len(points)))
+        stds = np.ones((len(self._models), len(points)))
         for i, model in enumerate(self._models):
             model.update()
             (mean, var) = model.predict(points)
