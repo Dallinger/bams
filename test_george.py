@@ -1,4 +1,4 @@
-from models import GPModel, SimpleModelBag
+from models import GPModel, GrammarModels
 from data import VectorData
 from george.kernels import ExpSquaredKernel, RationalQuadraticKernel
 from scipy import integrate
@@ -87,7 +87,7 @@ y = np.linspace(0, 1, 50) + 0.01 * np.random.randn()
 xs = np.linspace(-1, 2, 50)
 
 data = VectorData(x, y)
-models = SimpleModelBag(data=data, ndim=1)
+models = GrammarModels(data=data, ndim=1)
 models.update()
 model_posterior = models.posteriors()
 print("Model Posteiror", model_posterior, model_posterior.sum())
