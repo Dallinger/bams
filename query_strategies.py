@@ -64,8 +64,8 @@ class BALD(QueryStrategy):
 
     def score(self, points, models):
         # If there's no data, query at random.
-        if not models.data.y:
-            return RandomStrategy().next()
+        if not models.data:
+            return RandomStrategy().score(points, models)
 
         # For each model compute (an approximation to)
         # the model evdience and H[y|x,D,M]
