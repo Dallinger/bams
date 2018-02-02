@@ -50,9 +50,9 @@ if __name__ == '__main__':
 
     learner.learn(oracle=f2)
 
-    print(learner.posteriors)
-    print(learner.map_model)
+    #print(learner.posteriors)
+    #print(learner.map_model)
 
     # Plot predictions
-    x = np.random.rand(50, ndim)
-    learner.plot_predictions(x, dim=2)
+    #x = np.random.rand(50, ndim)
+    #learner.plot_predictions(x, dim=2)
