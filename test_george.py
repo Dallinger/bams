@@ -55,27 +55,27 @@ max_range = 4
 means = np.zeros((num_models, len(points)))
 stds = np.ones((num_models, len(points)))
 for i, model in enumerate(models):
-  (mean, var) = model.predict(points)
-  means[i, :] = mean
-  stds[i, :] = np.sqrt(var)
+    (mean, var) = model.predict(points)
+    means[i, :] = mean
+    stds[i, :] = np.sqrt(var)
 
 upper_values = means.max(0) + max_range * stds.max(0)
 lower_values = means.min(0) - max_range * stds.max(0)
 
 
 def entropy(y, mu, sigma, model_posterior):
-  sqrt_2pi = 2.5066282746310002
-  prob = np.exp(-0.5 * ((y - mu) / sigma) ** 2) / (sqrt_2pi * sigma)
-  prob = np.dot(model_posterior, prob)
-  eps = np.spacing(1)
-  return -prob * np.log(prob + eps)
+   sqrt_2pi = 2.5066282746310002
+   prob = np.exp(-0.5 * ((y - mu) / sigma) ** 2) / (sqrt_2pi * sigma)
+   prob = np.dot(model_posterior, prob)
+   eps = np.spacing(1)
+   return -prob * np.log(prob + eps)
 
 
 y_entropy = np.zeros(len(points))
 for i in range(len(points)):
-  def func(x):
-    return entropy(x, means[:, i], stds[:, i], model_posterior)
-  y_entropy[i] = integrate.quad(func, lower_values[i], upper_values[i])[0]
+    def func(x):
+        return entropy(x, means[:, i], stds[:, i], model_posterior)
+    y_entropy[i] = integrate.quad(func, lower_values[i], upper_values[i])[0]
 
 print("Marginal entropy", y_entropy)
 # Matlab Values:  0.3957    0.3573    0.7187    0.7295    0.7399
