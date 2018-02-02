@@ -1,7 +1,6 @@
 """Query strategies for a learner."""
 
 import numpy as np
-import scipy.integrate as integrate
 import sobol_seq
 
 
@@ -72,19 +71,19 @@ class BALD(QueryStrategy):
         # the model evdience and H[y|x,D,M]
         log_evidences = np.zeros(len(models))
         model_entropies = np.zeros((len(points), len(models)))
+
         for i, model in enumerate(models):
             log_evidences[i] = model.log_evidence()
-            model_entropies[i, :] = model.entropy(points)
+            model_entropies[:, i] = model.entropy(points)
 
         # Compute the model posterior
         model_posterior = np.exp(log_evidences - np.max(log_evidences))
 
         # Compute the expected model entropy
-        expected_model_entropies = model_entropies * model_posterior
+        expected_model_entropies = np.dot(model_entropies, model_posterior)
 
         # Compute the model-marginal entropy
-        marginal_entropies = models.marginal_entropy(
-            points, model_posterior)
+        marginal_entropies = models.marginal_entropy(points, model_posterior)
 
         # BALD is H[y | x, D] - E_model[H[y |x,D,M] ]
         return marginal_entropies - expected_model_entropies
