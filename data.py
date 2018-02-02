@@ -28,7 +28,11 @@ class VectorData(Data):
         plt.show()
 
     def __repr__(self):
-        if self.x is None:
+        if not self:
             return 'x : [] and y : []'
         else:
             return 'features x:\n{}\n outcomes y:\n{}'.format(self.x, self.y)
+
+    def __bool__(self):
+        return self.x is not None
+    __nonzero__ = __bool__
