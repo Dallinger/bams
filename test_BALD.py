@@ -1,4 +1,4 @@
-"""Test script for BAMS port."""
+"""Breaking BALD test script."""
 
 import random
 
@@ -6,8 +6,8 @@ import numpy as np
 
 from learners import ActiveLearner
 from query_strategies import (
+    BALD,
     HyperCubePool,
-    RandomStrategy,
 )
 
 
@@ -23,7 +23,7 @@ def f1(x):
 
 def f2(x):
     """Define another test oracle function."""
-    return x[0]
+    return x[2]
 
 
 def f3(x):
@@ -33,41 +33,26 @@ def f3(x):
 
 if __name__ == '__main__':
 
-    """DEMO 1."""
-
     ndim = 3
     pool_size = 200
-    budget = 50
+    budget = 20
 
     pool = HyperCubePool(ndim, pool_size)
-    qs = RandomStrategy(pool=pool)
+    qs = BALD(pool=pool)
 
     learner = ActiveLearner(
         query_strategy=qs,
         budget=budget,
-        base_kernels=["PER", "LIN"],
+        base_kernels=["PER", "LIN", "SE", "LG"],
         max_depth=2,
         ndim=ndim,
     )
 
-    print(learner.models)
-
-    # TODO: Don't raise exception when there is no data — use prior.
-
-    learner.learn(oracle=f3)
-
-    # # Alternative API for use in external experiment scripts.
-    # for i in range(20):
-    #     x = learner.next_query()
-    #     y = f2(x)
-    #     learner.update(x, y)
+    learner.learn(oracle=f2)
 
     print(learner.posteriors)
     print(learner.map_model)
 
     # Plot predictions
-    # x = np.array([np.linspace(0, 1, 50)]).T
     x = np.random.rand(50, ndim)
     learner.plot_predictions(x, dim=2)
-
-# TODO: Test that when candidate models are identical, the posteriors match.
