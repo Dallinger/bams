@@ -17,11 +17,11 @@ class VectorData(Data):
         self.y = y
 
     def update(self, x, y):
-        if self.x is None:
-            self.x, self.y = np.array([x]), np.array([y])
-        else:
+        if self:
             self.x = np.vstack((self.x, x))
             self.y = np.concatenate((self.y, [y]))
+        else:
+            self.x, self.y = np.array([x]), np.array([y])
 
     def plot(self):
         plt.scatter(self.x, self.y)
