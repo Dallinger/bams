@@ -81,7 +81,7 @@ class GrammarModels(object):
                     {"order": 1, "log_gamma2": 1}),
             "DP": (george.kernels.DotProductKernel, {}),
             "LG": (george.kernels.LocalGaussianKernel,
-                   {"location": 10, "log_width": 3}),
+                   {"location": 0.5, "log_width": -1}),
             "POLY": (george.kernels.PolynomialKernel,
                      {"order": 2, "log_sigma2": 2}),
         }
