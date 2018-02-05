@@ -49,14 +49,14 @@ class RandomStrategy(QueryStrategy):
 
 
 class BALD(QueryStrategy):
-    """ Bayesian Active Learning by Disagreement (BALD)
-        is a score function based on mutual information.
-        Here we use the formulation presented in [1], which
-        is the mutual information applied to model selection
-        I(y; M | x, D) = H[y|x,D] - E_M[H[y|x,D,M]],
-        where the first term is the model marginalized entropy
-        and the second term is the expected entropy of each model
-    """
+    """Bayesian Active Learning by Disagreement (BALD).
+
+    BALD is a score function based on mutual information.
+    Here, we use the formulation presented in [1], which
+    is the mutual information applied to model selection
+    I(y; M | x, D) = H[y|x,D] - E_M[H[y|x,D,M]],
+    where the first term is the model marginalized entropy
+    and the second term is the expected entropy of each model."""
 
     def __init__(self, **kwargs):
         self.replacement = kwargs.get('replacement', False)
