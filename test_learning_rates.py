@@ -38,14 +38,14 @@ if __name__ == '__main__':
 
     """Compare learning rates of a random and BALD learners."""
 
-    NUM_ROUNDS = 10
-    NDIM = 1
-    POOL_SIZE = 200
-    BUDGET = 20
+    NUM_ROUNDS = 100
+    NDIM = 5
+    POOL_SIZE = 500
+    BUDGET = 40
+    BASE_KERNELS = ["PER", "LIN"]
+    DEPTH = 1
 
-    BASE_KERNELS = ["PER", "LIN", "RQ", "LG", "SE"]
-
-    def grammar_oracle_sampler(ndim=1, max_depth=1, base_kernels=None, pool_size=200):
+    def grammar_oracle_sampler(ndim=1, max_depth=1, base_kernels=None, pool_size=POOL_SIZE):
         """Construct an oracle by sampling from a grammar over GPs."""
         if not base_kernels:
             base_kernels = ["LIN", "PER"]
@@ -84,7 +84,9 @@ if __name__ == '__main__':
             learner = learner_factory()
 
             f0, models, model_idx = grammar_oracle_sampler(
-                base_kernels=BASE_KERNELS
+                base_kernels=BASE_KERNELS,
+                ndim=NDIM,
+                max_depth=DEPTH,
             )
 
             print(model_idx)
@@ -108,7 +110,7 @@ if __name__ == '__main__':
             query_strategy=qs,
             budget=BUDGET,
             base_kernels=BASE_KERNELS,
-            max_depth=1,
+            max_depth=DEPTH,
             ndim=NDIM,
         )
         return learner
@@ -121,16 +123,17 @@ if __name__ == '__main__':
             query_strategy=qs,
             budget=BUDGET,
             base_kernels=BASE_KERNELS,
-            max_depth=1,
+            max_depth=DEPTH,
             ndim=NDIM,
         )
         return learner
 
     curve_random = learning_curve(learner_factory_random)
     curve_bald = learning_curve(learner_factory_bald)
-    plot_rnd = plt.scatter(np.arange(BUDGET), curve_random, label="Random")
-    plot_bald = plt.scatter(np.arange(BUDGET), curve_bald, label="BALD")
+    plot_rnd = plt.scatter(1+np.arange(BUDGET), curve_random, label="Random")
+    plot_bald = plt.scatter(1+np.arange(BUDGET), curve_bald, label="BALD")
     plt.legend(handles=[plot_rnd, plot_bald], loc='upper right')
+    plt.ylim([0, 1])
     plt.xlabel("Sample number")
     plt.ylabel("Posterior probability of generating model")
     plt.show()
