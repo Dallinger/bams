@@ -94,3 +94,18 @@ class ActiveLearner(object):
         plt.ylim([0, 1])
         plt.xlim([0, 1])
         plt.show()
+
+    def plot_posteriors(self, threshold=0.01):
+        posteriors = self.posteriors
+        super_idxs = np.argwhere(posteriors > threshold).flatten()
+        order = np.flip(np.argsort(posteriors[super_idxs]), axis=0)
+        y_pos = np.arange(len(super_idxs))
+        plt.bar(
+            y_pos,
+            posteriors[super_idxs[order]],
+            color="black"
+        )
+        plt.xticks(y_pos, super_idxs[order])
+        plt.ylim([0, 1])
+        plt.ylabel("Posterior probability")
+        plt.show()
