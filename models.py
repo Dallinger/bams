@@ -105,7 +105,7 @@ class GrammarModels(object):
         # Add base kernels.
         for kernel in kernels:
             for dim in range(ndim):
-                models.append(kernel[0](**kernel[1], ndim=ndim, axes=dim))
+                models.append(kernel[0](ndim=ndim, axes=dim, **kernel[1]))
 
         # Add all compositions of the base kernels up to the max depth.
         for _ in range(1, self.max_depth):
@@ -117,9 +117,9 @@ class GrammarModels(object):
                             models.append(
                                 operator(
                                     kernel[0](
-                                        **kernel[1],
                                         ndim=ndim,
-                                        axes=dim
+                                        axes=dim,
+                                        **kernel[1]
                                     ), model))
 
         return models
