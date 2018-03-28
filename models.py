@@ -1,6 +1,6 @@
 import george
 import numpy as np
-from scipy import integrate
+from scipy import integrate, optimize
 from data import VectorData
 
 
@@ -14,9 +14,7 @@ class Model(object):
 
 
 class GPModel(Model):
-
-    """TODO: Optimize hyperparameters.
-    http://george.readthedocs.io/en/latest/tutorials/hyper/#hyperparameter-optimization
+    """
     TODO: add error if no data is attached
     """
 
@@ -25,30 +23,46 @@ class GPModel(Model):
         self.gp = george.GP(kernel)
         self.data = data
         self.yerr = yerr
+        self.half_log_2pi = 0.9189385332046727
 
-    def update(self):
+    def nll(self, params):
+        self.gp.set_parameter_vector(params)
+        ll = self.gp.log_likelihood(self.data.y, quiet=True)
+        grad = self.gp.grad_log_likelihood(self.data.y, quiet=True)
+        return -ll, -grad
+
+    def update(self, hyperparameter_optimization=True):
         if self.data:
             self.gp.compute(self.data.x, yerr=self.yerr)
+            if hyperparameter_optimization:
+                params = self.gp.get_parameter_vector()
+                soln = optimize.minimize(self.nll, params, jac=True)
+                self.soln = soln
+                self.gp.set_parameter_vector(soln.x)
 
     def predict(self, x):
         return self.gp.predict(self.data.y, x, return_var=True)
 
     def log_likelihood(self):
-        return self.gp.log_likelihood(self.data.y)
+        return self.gp.log_likelihood(self.data.y) + self.gp.log_prior()
 
-    def log_evidence(self):
+    def log_evidence(self, bic=False):
         if self.data:
             n = len(self.data.y)     # number of observations
         else:
             n = 1
         k = len(self.gp.parameter_vector)    # number of parameters
         # Negative of BIC - Bayesian information criterion
-        return 2 * self.log_likelihood() - k * np.log(n)
+        if bic:
+            return 2 * self.log_likelihood() - k * np.log(n)
+        # Laplace Approximation to the model evidence
+        chol_hess_inv = np.linalg.cholesky(self.soln.hess_inv)
+        half_log_det_hess_inv = np.sum(np.log(np.diag(chol_hess_inv)))
+        return self.log_likelihood() + k * self.half_log_2pi + half_log_det_hess_inv
 
     def entropy(self, points):
-        half_log_2pi = 0.9189385332046727
         (mean, covariance) = self.predict(points)
-        return 0.5 + half_log_2pi + np.log(covariance) * 0.5
+        return 0.5 + self.half_log_2pi + np.log(covariance) * 0.5
 
     def sample(self, points):
         return self.gp.sample(points)

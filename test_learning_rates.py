@@ -130,8 +130,8 @@ if __name__ == '__main__':
 
     curve_random = learning_curve(learner_factory_random)
     curve_bald = learning_curve(learner_factory_bald)
-    plot_rnd = plt.scatter(1+np.arange(BUDGET), curve_random, label="Random")
-    plot_bald = plt.scatter(1+np.arange(BUDGET), curve_bald, label="BALD")
+    plot_rnd = plt.scatter(1 + np.arange(BUDGET), curve_random, label="Random")
+    plot_bald = plt.scatter(1 + np.arange(BUDGET), curve_bald, label="BALD")
     plt.legend(handles=[plot_rnd, plot_bald], loc='upper right')
     plt.ylim([0, 1])
     plt.xlabel("Sample number")
