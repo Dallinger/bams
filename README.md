@@ -1,6 +1,11 @@
 # Active model selection
 
-Usage:
+## Installation
+```
+pip install bams
+```
+
+## Usage
 ```Python
 import bams
 import oracle
@@ -12,11 +17,13 @@ learner = bams.learners.Learner(
     max_depth=2,
     dims=3,
 )
+
 while learner.budget > 0:
   x = learner.next_query()
   y = learner.query(oracle, x)
   learner.update(x, y)
 ```
+
 
 ## References
 
