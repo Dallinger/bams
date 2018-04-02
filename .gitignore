@@ -1,2 +1,4 @@
 
 *.pyc
+.eggs/*
+bams.egg-info/*
