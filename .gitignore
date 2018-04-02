@@ -2,3 +2,4 @@
 *.pyc
 .eggs/*
 bams.egg-info/*
+*.DS_Store
