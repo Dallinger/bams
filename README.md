@@ -15,7 +15,7 @@ learner = bams.learners.ActiveLearner(
     budget=10,
     base_kernels=["PER", "LIN", "SE", "LG"],
     max_depth=2,
-    dims=3,
+    ndim=3,
 )
 
 while learner.budget > 0:
