@@ -10,7 +10,7 @@ pip install bams
 import bams
 import oracle
 
-learner = bams.learners.Learner(
+learner = bams.learners.ActiveLearner(
     query_strategy=bams.strategies.BALD,
     budget=10,
     base_kernels=["PER", "LIN", "SE", "LG"],

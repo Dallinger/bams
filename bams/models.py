@@ -1,7 +1,8 @@
 import george
 import numpy as np
 from scipy import integrate, optimize
-from data import VectorData
+
+from .data import VectorData
 
 
 class Model(object):

@@ -5,9 +5,9 @@ import sys
 import matplotlib.pyplot as plt
 import numpy as np
 
-from data import VectorData
-from models import GrammarModels
-from query_strategies import BALD
+from .data import VectorData
+from .models import GrammarModels
+from .query_strategies import BALD
 
 
 class ActiveLearner(object):
