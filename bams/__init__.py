@@ -3,7 +3,7 @@
 from . import (
     data,
     learners,
-    models,
+    learning_models,
     query_strategies,
 )
 
@@ -12,7 +12,7 @@ strategies = query_strategies
 __all__ = (
     "data",
     "learners",
-    "models",
+    "learning_models",
     "query_strategies",
     "strategies",
 )
