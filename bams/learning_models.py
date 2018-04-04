@@ -3,7 +3,7 @@ import numpy as np
 from scipy import integrate, optimize
 
 
-class Model(object):
+class BaseModel(object):
 
     def update(self):
         raise NotImplementedError
@@ -12,7 +12,7 @@ class Model(object):
         raise NotImplementedError
 
 
-class GPModel(Model):
+class GPModel(BaseModel):
     """
     TODO: add error if no data is attached
     """

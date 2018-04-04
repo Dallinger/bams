@@ -9,7 +9,6 @@ from .data import VectorData
 from .models import GrammarModels
 from .query_strategies import BALD
 
-
 class ActiveLearner(object):
     """An active learner."""
 

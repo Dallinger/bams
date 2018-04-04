@@ -1,4 +1,4 @@
-from models import GPModel, GrammarModels
+from learning_models import GPModel, GrammarModels
 from data import VectorData
 from george.kernels import ExpSquaredKernel, RationalQuadraticKernel
 from scipy import integrate

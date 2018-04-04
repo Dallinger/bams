@@ -1,4 +1,4 @@
-from models import GrammarModels
+from learning_models import GrammarModels
 from data import VectorData
 import george
 import numpy as np
