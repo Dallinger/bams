@@ -1,8 +1,9 @@
-from models import GrammarModels
-from data import VectorData
+from bams.models import GrammarModels
+from bams.data import VectorData
+
 import george
-import numpy as np
 from george import kernels
+import numpy as np
 
 
 def generate_data(kernel, N=50, rng=(-5, 5)):

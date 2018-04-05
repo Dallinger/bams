@@ -1,8 +1,9 @@
-from models import GPModel, GrammarModels
-from data import VectorData
 from george.kernels import ExpSquaredKernel, RationalQuadraticKernel
-from scipy import integrate
 import numpy as np
+from scipy import integrate
+
+from bams.models import GPModel, GrammarModels
+from bams.data import VectorData
 
 # Training X
 x = np.array([0.0855, 0.9631, 0.2625, 0.5468, 0.8010, 0.5211, 0.0292,

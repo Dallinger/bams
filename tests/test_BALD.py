@@ -4,8 +4,8 @@ import random
 
 import numpy as np
 
-from learners import ActiveLearner
-from query_strategies import (
+from bams.learners import ActiveLearner
+from bams.query_strategies import (
     BALD,
     HyperCubePool,
 )

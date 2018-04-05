@@ -5,9 +5,9 @@ import random
 import matplotlib.pyplot as plt
 import numpy as np
 
-from learners import ActiveLearner
-from models import GrammarModels
-from query_strategies import (
+from bams.learners import ActiveLearner
+from bams.models import GrammarModels
+from bams.query_strategies import (
     BALD,
     HyperCubePool,
     RandomStrategy,
