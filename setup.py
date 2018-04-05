@@ -14,7 +14,6 @@ DESCRIPTION = 'Bayesian Active Model Selection.'
 URL = 'https://github.com/Dallinger/bams'
 EMAIL = 'dallinger-admin@lists.berkeley.edu'
 AUTHOR = 'Gustavo Malkomes and Jordan Suchow'
-REQUIRES_PYTHON = '>=3.6.0'
 VERSION = None
 
 # What packages are required for this module to be executed?
@@ -82,7 +81,6 @@ setup(
     description=DESCRIPTION,
     author=AUTHOR,
     author_email=EMAIL,
-    python_requires=REQUIRES_PYTHON,
     url=URL,
     packages=find_packages(exclude=('tests',)),
     # If your package is a single module, use this instead of 'packages':
