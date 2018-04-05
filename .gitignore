@@ -3,3 +3,6 @@
 .eggs/*
 bams.egg-info/*
 *.DS_Store
+.tox/*
+.cache/*
+.pytest_cache/*
