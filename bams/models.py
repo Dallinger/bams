@@ -51,9 +51,11 @@ class GPModel(Model):
         else:
             n = 1
         k = len(self.gp.parameter_vector)    # number of parameters
-        # Negative of BIC - Bayesian information criterion
+
+        # Negative of Bayesian information criterion (BIC)
         if bic:
             return 2 * self.log_likelihood() - k * np.log(n)
+
         # Laplace Approximation to the model evidence
         chol_hess_inv = np.linalg.cholesky(self.soln.hess_inv)
         half_log_det_hess_inv = np.sum(np.log(np.diag(chol_hess_inv)))
@@ -78,7 +80,8 @@ class GrammarModels(object):
         self.base_kernels = base_kernels
         self.kernels = self._build_kernels(self.base_kernels, ndim)
         self.data = data
-        self._models = [GPModel(kernel=k, data=self.data) for k in self.kernels]
+        self._models = [GPModel(kernel=k, data=self.data)
+                        for k in self.kernels]
 
     @property
     def _kernel_lookup(self):
@@ -181,8 +184,10 @@ class GrammarModels(object):
         # Numerically compute the entropy of y for each test point
         y_entropy = np.zeros(len(points))
         for i in range(len(points)):
+
             def func(x):
                 return entropy(x, means[:, i], stds[:, i], model_posterior)
+
             y_entropy[i] = integrate.quad(
                 func,
                 lower_values[i],
