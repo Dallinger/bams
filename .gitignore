@@ -6,3 +6,4 @@ bams.egg-info/*
 .tox/*
 .cache/*
 .pytest_cache/*
+.venv/*
