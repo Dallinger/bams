@@ -64,11 +64,7 @@ class GPModel(Model):
     def update(self, hyperparameter_optimization=True):
         if not self.data:
             raise ValueError('Data is None')
-        try:
-            self.gp.compute(self.data.x, yerr=self.yerr)
-        except:
-            import pdb
-            pdb.set_trace()
+        self.gp.compute(self.data.x, yerr=self.yerr)
         if hyperparameter_optimization:
             self.optimize()
 
