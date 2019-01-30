@@ -78,7 +78,7 @@ class GPModel(Model):
     def log_likelihood(self):
         return self.gp.log_likelihood(self.data.y) + self.gp.log_prior()
 
-    def log_evidence(self, bic=True):
+    def log_evidence(self, bic=False):
         if self.data:
             n = len(self.data.y)     # number of observations
         else:
@@ -90,22 +90,23 @@ class GPModel(Model):
             return 2 * self.log_likelihood() - k * np.log(n)
 
         # Laplace Approximation to the model evidence
-        chol_hess_inv = self.soln.chol_hess_inv
+        chol_hess_inv = self.chol_hess_inv
         half_log_det_hess_inv = np.sum(np.log(np.diag(chol_hess_inv)))
         return self.log_likelihood() + k * HALF_LOG_2PI + half_log_det_hess_inv
 
     def entropy(self, points):
         (mean, covariance) = self.predict(points)
-        if any(covariance < 0):
+        if any(covariance <= 0):
             # try to recover by recomputing the precomputations
             # and adding more noise
             self.gp.compute(self.data.x, yerr=self.yerr + 5)
             (mean, covariance) = self.predict(points)
-        if any(covariance < 0):
+        if any(covariance <= 0):
             import warnings
             warnings.warn(
-                'Predictions are negative for model: {}'.format(self.kernel))
-            covariance[covariance <= 0] = 1e-4
+                'Predictions are negative for model: {}'.format(self.kernel)
+            )
+            covariance[covariance <= 0] = 1e2
 
         return 0.5 + HALF_LOG_2PI + np.log(covariance) * 0.5
 
@@ -207,7 +208,7 @@ class GrammarModels(object):
         means = np.zeros((len(self._models), len(points)))
         stds = np.ones((len(self._models), len(points)))
         for i, model in enumerate(self._models):
-            model.update()
+            # model.update()
             (mean, var) = model.predict(points)
             means[i, :] = mean
             stds[i, :] = np.sqrt(var)
@@ -219,6 +220,8 @@ class GrammarModels(object):
 
         # Compute the entropy of a mixture of Gaussians for a single y
         def entropy(y, mu, sigma, model_posterior):
+            if any(sigma <= 0):
+                sigma[sigma <= 0] = 1e-6
             prob = np.exp(-0.5 * ((y - mu) / sigma) ** 2) / (SQRT_2PI * sigma)
             prob = np.dot(model_posterior, prob)
             eps = np.spacing(1)
