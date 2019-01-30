@@ -59,12 +59,14 @@ class ActiveLearner(object):
         self.data.update(x, y)
         self.models.update()
 
-    def learn(self, oracle):
+    def learn(self, oracle, verbose=False):
         """Query the oracle until the budget is depleted."""
         while self.budget > 0:
             x = self.next_query()
             y = self.query(oracle, x)
             self.update(x, y)
+            if verbose:
+                print('budget: {}, x : {}, y : {}'.format(self.budget, x, y))
 
     def __repr__(self):
         return 'models={}\nqs={}\ndata:\n{}'.format(

@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from bams.models import GPModel
 from bams.data import VectorData
-from george.kernels import ExpSquaredKernel, RationalQuadraticKernel
+from george.kernels import ExpSquaredKernel, RationalQuadraticKernel, CosineKernel, LinearKernel
 from scipy import integrate
 
 
@@ -29,7 +29,7 @@ class TestGpModels(object):
         return xs.reshape(5, 2)
 
     @pytest.fixture
-    def models(self, training_data):
+    def known_models(self, training_data):
         models = []
         kernel = 1.0 * ExpSquaredKernel(1.0, ndim=2)
         se_model = GPModel(kernel=kernel, data=training_data, yerr=1)
@@ -42,31 +42,63 @@ class TestGpModels(object):
 
         return models
 
-    def test_create_gp_model(self, training_data):
-        kernel = 1.0 * ExpSquaredKernel(1.0, ndim=2)
-        GPModel(kernel=kernel, data=training_data, yerr=1)
+    @pytest.fixture
+    def kernels(self):
+        ndim = 2
+        kernels = [
+            ExpSquaredKernel(1.0, ndim=ndim),
+            RationalQuadraticKernel(log_alpha=0.0, metric=1.0, ndim=ndim),
+            CosineKernel(log_period=1, ndim=ndim),
+            LinearKernel(order=1, log_gamma2=1.0, ndim=ndim),
+        ]
+        return kernels
 
-    def test_loglikelihoods(self, models):
+    def test_create_gp_model(self, training_data, test_data, kernels):
+
+        models = []
+        for kernel in kernels:
+            model = GPModel(data=training_data, kernel=kernel)
+            old_parameters = model.gp.get_parameter_vector()
+            model.update()
+            new_parameters = model.gp.get_parameter_vector()
+            assert not np.array_equal(old_parameters, new_parameters)
+            models.append(model)
+            mu, cov = model.predict(test_data)
+            assert all(cov >= 0)
+
+    def test_predictions(self):
+        x = np.array([[0.94921875, 0.26953125, 0.34765625],
+                      [0.28125, 0.28125, 0.15625]])
+        y = np.array([0.34765625, 0.15625])
+        yerr = 0.1
+        data = VectorData(x, y)
+        kernel = CosineKernel(log_period=11.694150123757376, ndim=3, axes=0)
+        model = GPModel(data=data, kernel=kernel, yerr=yerr)
+        model.update()
+        mean, cov = model.predict(x)
+        assert all(cov >= 0)
+
+    def test_loglikelihoods(self, known_models):
         # values computed using MATLAB implementation
         expected_log_likeloods = [-11.4466, -11.4256]
         tolerance = 0.001
 
-        for model, expected_ll in zip(models, expected_log_likeloods):
+        for model, expected_ll in zip(known_models, expected_log_likeloods):
             model.update(hyperparameter_optimization=False)
             assert abs(model.log_likelihood() - expected_ll) < tolerance
             model.update()
             assert model.log_likelihood() > expected_ll
 
-    def test_marginal_entropy(self, models, test_data):
+    def test_marginal_entropy(self, known_models, test_data):
         # Compute the marginal model entropy
-        num_models = len(models)
+        num_models = len(known_models)
         max_range = 4
 
         # Compute predictions and model posterior
         means = np.zeros((num_models, len(test_data)))
         stds = np.ones((num_models, len(test_data)))
         log_evidences = np.zeros(num_models)
-        for i, model in enumerate(models):
+        for i, model in enumerate(known_models):
             model.update(hyperparameter_optimization=False)
             log_evidences[i] = model.log_evidence(bic=True)
             (mean, var) = model.predict(test_data)
