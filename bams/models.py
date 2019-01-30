@@ -2,6 +2,9 @@ import george
 import numpy as np
 from scipy import integrate, optimize
 
+HALF_LOG_2PI = 0.9189385
+SQRT_2PI = 2.5066282
+
 
 class Model(object):
 
@@ -22,7 +25,6 @@ class GPModel(Model):
         self.gp = george.GP(kernel)
         self.data = data
         self.yerr = yerr
-        self.half_log_2pi = 0.9189385332046727
 
     def nll(self, params):
         self.gp.set_parameter_vector(params)
@@ -59,11 +61,11 @@ class GPModel(Model):
         # Laplace Approximation to the model evidence
         chol_hess_inv = np.linalg.cholesky(self.soln.hess_inv)
         half_log_det_hess_inv = np.sum(np.log(np.diag(chol_hess_inv)))
-        return self.log_likelihood() + k * self.half_log_2pi + half_log_det_hess_inv
+        return self.log_likelihood() + k * HALF_LOG_2PI + half_log_det_hess_inv
 
     def entropy(self, points):
         (mean, covariance) = self.predict(points)
-        return 0.5 + self.half_log_2pi + np.log(covariance) * 0.5
+        return 0.5 + HALF_LOG_2PI + np.log(covariance) * 0.5
 
     def sample(self, points):
         return self.gp.sample(points)
@@ -175,8 +177,7 @@ class GrammarModels(object):
 
         # Compute the entropy of a mixture of Gaussians for a single y
         def entropy(y, mu, sigma, model_posterior):
-            sqrt_2pi = 2.5066282746310002
-            prob = np.exp(-0.5 * ((y - mu) / sigma) ** 2) / (sqrt_2pi * sigma)
+            prob = np.exp(-0.5 * ((y - mu) / sigma) ** 2) / (SQRT_2PI * sigma)
             prob = np.dot(model_posterior, prob)
             eps = np.spacing(1)
             return -prob * np.log(prob + eps)
