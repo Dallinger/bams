@@ -27,20 +27,50 @@ class GPModel(Model):
         self.yerr = yerr
 
     def nll(self, params):
+        if np.any((params[:] < -10) + (params[:] > 11)):
+            return np.inf
         self.gp.set_parameter_vector(params)
         ll = self.gp.log_likelihood(self.data.y, quiet=True)
-        grad = self.gp.grad_log_likelihood(self.data.y, quiet=True)
-        return -ll, -grad
+        return -ll if np.isfinite(ll) else 1e25
+
+    def grad_nll(self, params):
+        self.gp.set_parameter_vector(params)
+        return -self.gp.grad_log_likelihood(self.data.y, quiet=True)
+
+    def optimize(self):
+        # method="L-BFGS-B"
+        initial_parameter = self.gp.get_parameter_vector()
+        random_parameters = [
+            np.random.uniform(-5, 5, len(self.gp)) for _ in range(3)]
+        parameters = [initial_parameter] + random_parameters
+        results = []
+
+        for p in parameters:
+            try:
+                result = optimize.minimize(
+                    self.nll, p, jac=self.grad_nll,  # method="BFGS"
+                )
+                chol_hess_inv = np.linalg.cholesky(result.hess_inv)
+            except np.linalg.LinAlgError:
+                continue
+
+            results.append((result, chol_hess_inv))
+
+        results = sorted(results, key=lambda x: x[0].fun)
+        result, chol_hess_inv = results[0]
+        self.gp.set_parameter_vector(result.x)
+        self.chol_hess_inv = chol_hess_inv
 
     def update(self, hyperparameter_optimization=True):
         if not self.data:
             raise ValueError('Data is None')
-        self.gp.compute(self.data.x, yerr=self.yerr)
+        try:
+            self.gp.compute(self.data.x, yerr=self.yerr)
+        except:
+            import pdb
+            pdb.set_trace()
         if hyperparameter_optimization:
-            params = self.gp.get_parameter_vector()
-            soln = optimize.minimize(self.nll, params, jac=True)
-            self.soln = soln
-            self.gp.set_parameter_vector(soln.x)
+            self.optimize()
 
     def predict(self, x):
         return self.gp.predict(self.data.y, x, return_var=True)
@@ -48,7 +78,7 @@ class GPModel(Model):
     def log_likelihood(self):
         return self.gp.log_likelihood(self.data.y) + self.gp.log_prior()
 
-    def log_evidence(self, bic=False):
+    def log_evidence(self, bic=True):
         if self.data:
             n = len(self.data.y)     # number of observations
         else:
@@ -60,12 +90,23 @@ class GPModel(Model):
             return 2 * self.log_likelihood() - k * np.log(n)
 
         # Laplace Approximation to the model evidence
-        chol_hess_inv = np.linalg.cholesky(self.soln.hess_inv)
+        chol_hess_inv = self.soln.chol_hess_inv
         half_log_det_hess_inv = np.sum(np.log(np.diag(chol_hess_inv)))
         return self.log_likelihood() + k * HALF_LOG_2PI + half_log_det_hess_inv
 
     def entropy(self, points):
         (mean, covariance) = self.predict(points)
+        if any(covariance < 0):
+            # try to recover by recomputing the precomputations
+            # and adding more noise
+            self.gp.compute(self.data.x, yerr=self.yerr + 5)
+            (mean, covariance) = self.predict(points)
+        if any(covariance < 0):
+            import warnings
+            warnings.warn(
+                'Predictions are negative for model: {}'.format(self.kernel))
+            covariance[covariance <= 0] = 1e-4
+
         return 0.5 + HALF_LOG_2PI + np.log(covariance) * 0.5
 
     def sample(self, points):
@@ -193,7 +234,8 @@ class GrammarModels(object):
             y_entropy[i] = integrate.quad(
                 func,
                 lower_values[i],
-                upper_values[i]
+                upper_values[i],
+                full_output=1,
             )[0]
 
         return y_entropy
