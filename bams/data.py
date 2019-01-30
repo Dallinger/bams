@@ -33,6 +33,9 @@ class VectorData(Data):
         else:
             return 'features x:\n{}\n outcomes y:\n{}'.format(self.x, self.y)
 
+    def __len__(self):
+        return len(self.y)
+
     def __bool__(self):
         return self.x is not None
     __nonzero__ = __bool__
