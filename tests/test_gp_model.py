@@ -65,9 +65,19 @@ class TestGpModels(object):
             assert not np.array_equal(old_parameters, new_parameters)
             models.append(model)
             mu, cov = model.predict(test_data)
-            assert all(cov) >= 0
+            assert all(cov >= 0)
 
-    #def test_predictions(self, kernels):
+    def test_predictions(self):
+        x = np.array([[0.94921875, 0.26953125, 0.34765625],
+                      [0.28125, 0.28125, 0.15625]])
+        y = np.array([0.34765625, 0.15625])
+        yerr = 0.1
+        data = VectorData(x, y)
+        kernel = CosineKernel(log_period=11.694150123757376, ndim=3, axes=0)
+        model = GPModel(data=data, kernel=kernel, yerr=yerr)
+        model.update()
+        mean, cov = model.predict(x)
+        assert all(cov >= 0)
 
     def test_loglikelihoods(self, known_models):
         # values computed using MATLAB implementation
