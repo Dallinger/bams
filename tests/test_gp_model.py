@@ -60,7 +60,6 @@ class TestGpModels(object):
             model = GPModel(data=training_data, kernel=kernel)
             old_parameters = model.gp.get_parameter_vector()
             model.update()
-            print(model.soln)
             new_parameters = model.gp.get_parameter_vector()
             assert not np.array_equal(old_parameters, new_parameters)
             models.append(model)
