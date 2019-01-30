@@ -33,13 +33,14 @@ class GPModel(Model):
         return -ll, -grad
 
     def update(self, hyperparameter_optimization=True):
-        if self.data:
-            self.gp.compute(self.data.x, yerr=self.yerr)
-            if hyperparameter_optimization:
-                params = self.gp.get_parameter_vector()
-                soln = optimize.minimize(self.nll, params, jac=True)
-                self.soln = soln
-                self.gp.set_parameter_vector(soln.x)
+        if not self.data:
+            raise ValueError('Data is None')
+        self.gp.compute(self.data.x, yerr=self.yerr)
+        if hyperparameter_optimization:
+            params = self.gp.get_parameter_vector()
+            soln = optimize.minimize(self.nll, params, jac=True)
+            self.soln = soln
+            self.gp.set_parameter_vector(soln.x)
 
     def predict(self, x):
         return self.gp.predict(self.data.y, x, return_var=True)
