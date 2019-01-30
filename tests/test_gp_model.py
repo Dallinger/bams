@@ -42,16 +42,18 @@ class TestGpModels(object):
 
         return models
 
-    def test_create_gp_model(self, training_data, test_data):
-
+    @pytest.fixture
+    def kernels(self):
         ndim = 2
-
         kernels = [
             ExpSquaredKernel(1.0, ndim=ndim),
             RationalQuadraticKernel(log_alpha=0.0, metric=1.0, ndim=ndim),
             CosineKernel(log_period=1, ndim=ndim),
             LinearKernel(order=1, log_gamma2=1.0, ndim=ndim),
         ]
+        return kernels
+
+    def test_create_gp_model(self, training_data, test_data, kernels):
 
         models = []
         for kernel in kernels:
@@ -64,6 +66,8 @@ class TestGpModels(object):
             models.append(model)
             mu, cov = model.predict(test_data)
             assert all(cov) >= 0
+
+    #def test_predictions(self, kernels):
 
     def test_loglikelihoods(self, known_models):
         # values computed using MATLAB implementation
