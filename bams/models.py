@@ -74,7 +74,7 @@ class GPModel(Model):
     def log_likelihood(self):
         return self.gp.log_likelihood(self.data.y) + self.gp.log_prior()
 
-    def log_evidence(self, bic=True):
+    def log_evidence(self, bic=False):
         if self.data:
             n = len(self.data.y)     # number of observations
         else:
