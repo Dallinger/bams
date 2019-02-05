@@ -2,6 +2,9 @@ import george
 import numpy as np
 from scipy import integrate, optimize
 
+HALF_LOG_2PI = 0.9189385
+SQRT_2PI = 2.5066282
+
 
 class Model(object):
 
@@ -22,22 +25,48 @@ class GPModel(Model):
         self.gp = george.GP(kernel)
         self.data = data
         self.yerr = yerr
-        self.half_log_2pi = 0.9189385332046727
 
     def nll(self, params):
+        if np.any((params[:] < -10) + (params[:] > 11)):
+            return np.inf
         self.gp.set_parameter_vector(params)
         ll = self.gp.log_likelihood(self.data.y, quiet=True)
-        grad = self.gp.grad_log_likelihood(self.data.y, quiet=True)
-        return -ll, -grad
+        return -ll if np.isfinite(ll) else 1e25
+
+    def grad_nll(self, params):
+        self.gp.set_parameter_vector(params)
+        return -self.gp.grad_log_likelihood(self.data.y, quiet=True)
+
+    def optimize(self):
+        # method="L-BFGS-B"
+        initial_parameter = self.gp.get_parameter_vector()
+        random_parameters = [
+            np.random.uniform(-5, 5, len(self.gp)) for _ in range(3)]
+        parameters = [initial_parameter] + random_parameters
+        results = []
+
+        for p in parameters:
+            try:
+                result = optimize.minimize(
+                    self.nll, p, jac=self.grad_nll,  # method="BFGS"
+                )
+                chol_hess_inv = np.linalg.cholesky(result.hess_inv)
+            except np.linalg.LinAlgError:
+                continue
+
+            results.append((result, chol_hess_inv))
+
+        results = sorted(results, key=lambda x: x[0].fun)
+        result, chol_hess_inv = results[0]
+        self.gp.set_parameter_vector(result.x)
+        self.chol_hess_inv = chol_hess_inv
 
     def update(self, hyperparameter_optimization=True):
-        if self.data:
-            self.gp.compute(self.data.x, yerr=self.yerr)
-            if hyperparameter_optimization:
-                params = self.gp.get_parameter_vector()
-                soln = optimize.minimize(self.nll, params, jac=True)
-                self.soln = soln
-                self.gp.set_parameter_vector(soln.x)
+        if not self.data:
+            raise ValueError('Data is None')
+        self.gp.compute(self.data.x, yerr=self.yerr)
+        if hyperparameter_optimization:
+            self.optimize()
 
     def predict(self, x):
         return self.gp.predict(self.data.y, x, return_var=True)
@@ -51,17 +80,31 @@ class GPModel(Model):
         else:
             n = 1
         k = len(self.gp.parameter_vector)    # number of parameters
-        # Negative of BIC - Bayesian information criterion
+
+        # Negative of Bayesian information criterion (BIC)
         if bic:
             return 2 * self.log_likelihood() - k * np.log(n)
+
         # Laplace Approximation to the model evidence
-        chol_hess_inv = np.linalg.cholesky(self.soln.hess_inv)
+        chol_hess_inv = self.chol_hess_inv
         half_log_det_hess_inv = np.sum(np.log(np.diag(chol_hess_inv)))
-        return self.log_likelihood() + k * self.half_log_2pi + half_log_det_hess_inv
+        return self.log_likelihood() + k * HALF_LOG_2PI + half_log_det_hess_inv
 
     def entropy(self, points):
         (mean, covariance) = self.predict(points)
-        return 0.5 + self.half_log_2pi + np.log(covariance) * 0.5
+        if any(covariance <= 0):
+            # try to recover by recomputing the precomputations
+            # and adding more noise
+            self.gp.compute(self.data.x, yerr=self.yerr + 5)
+            (mean, covariance) = self.predict(points)
+        if any(covariance <= 0):
+            import warnings
+            warnings.warn(
+                'Predictions are negative for model: {}'.format(self.kernel)
+            )
+            covariance[covariance <= 0] = 1e2
+
+        return 0.5 + HALF_LOG_2PI + np.log(covariance) * 0.5
 
     def sample(self, points):
         return self.gp.sample(points)
@@ -78,7 +121,8 @@ class GrammarModels(object):
         self.base_kernels = base_kernels
         self.kernels = self._build_kernels(self.base_kernels, ndim)
         self.data = data
-        self._models = [GPModel(kernel=k, data=self.data) for k in self.kernels]
+        self._models = [GPModel(kernel=k, data=self.data)
+                        for k in self.kernels]
 
     @property
     def _kernel_lookup(self):
@@ -160,7 +204,7 @@ class GrammarModels(object):
         means = np.zeros((len(self._models), len(points)))
         stds = np.ones((len(self._models), len(points)))
         for i, model in enumerate(self._models):
-            model.update()
+            # model.update()
             (mean, var) = model.predict(points)
             means[i, :] = mean
             stds[i, :] = np.sqrt(var)
@@ -172,8 +216,9 @@ class GrammarModels(object):
 
         # Compute the entropy of a mixture of Gaussians for a single y
         def entropy(y, mu, sigma, model_posterior):
-            sqrt_2pi = 2.5066282746310002
-            prob = np.exp(-0.5 * ((y - mu) / sigma) ** 2) / (sqrt_2pi * sigma)
+            if any(sigma <= 0):
+                sigma[sigma <= 0] = 1e-6
+            prob = np.exp(-0.5 * ((y - mu) / sigma) ** 2) / (SQRT_2PI * sigma)
             prob = np.dot(model_posterior, prob)
             eps = np.spacing(1)
             return -prob * np.log(prob + eps)
@@ -181,12 +226,15 @@ class GrammarModels(object):
         # Numerically compute the entropy of y for each test point
         y_entropy = np.zeros(len(points))
         for i in range(len(points)):
+
             def func(x):
                 return entropy(x, means[:, i], stds[:, i], model_posterior)
+
             y_entropy[i] = integrate.quad(
                 func,
                 lower_values[i],
-                upper_values[i]
+                upper_values[i],
+                full_output=1,
             )[0]
 
         return y_entropy

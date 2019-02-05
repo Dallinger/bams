@@ -18,9 +18,11 @@ class HyperCubePool(object):
         return self.num_points
 
     def __repr__(self):
-        return 'Pool (Sobol). Dim={}, num_points={}'.format(
+        return 'Pool (Sobol). Dim={}, num_points={}\n{}'.format(
             self.dim,
-            self.num_points)
+            self.num_points,
+            self._hypercube.__repr__(),
+        )
 
 
 class QueryStrategy(object):
@@ -30,13 +32,18 @@ class QueryStrategy(object):
             self.pool = pool
         else:
             self.pool = HyperCubePool(dim, 100)
+        self.used = []
 
     def next(self, models=None):
         """Select the point with the highest score."""
         # scores = np.array([self.score(point, models)
         #                    for point in self.pool._hypercube])
         scores = np.array(self.score(self.pool, models))
-        return self.pool._hypercube[np.argmax(scores)]
+        if self.used:
+            scores[self.used] = np.NINF
+        index = np.argmax(scores)
+        self.used.append(index)
+        return self.pool._hypercube[index]
 
     def score(self, point):
         raise NotImplementedError
