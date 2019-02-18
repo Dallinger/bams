@@ -52,7 +52,7 @@ if __name__ == '__main__':
 
     print(learner.models)
 
-    # TODO: Don't raise exception when there is no data — use prior.
+    # TODO: Don't raise exception when there is no data - use prior.
 
     learner.learn(oracle=f3)
 

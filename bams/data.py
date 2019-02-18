@@ -1,5 +1,7 @@
 """Classes for handling data."""
 
+from __future__ import absolute_import
+
 import matplotlib.pyplot as plt
 import numpy as np
 

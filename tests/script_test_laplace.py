@@ -30,7 +30,7 @@ num_kernels = len(kernel_names)
 kernel_dict = dict(zip(range(num_kernels), kernel_names))
 
 for i in range(num_kernels):
-    success_rate = 0
+    success_rate = 0.0
     for j in range(num_exp):
         x, y = generate_data(kernel=kernel_dict[i])
         data = VectorData(x, y)
