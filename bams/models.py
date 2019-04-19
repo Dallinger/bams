@@ -4,6 +4,7 @@ from six.moves import range
 import george
 import numpy as np
 from scipy import integrate, optimize
+import sys
 
 HALF_LOG_2PI = 0.9189385
 SQRT_2PI = 2.5066282
@@ -78,7 +79,7 @@ class GPModel(Model):
         return self.gp.log_likelihood(self.data.y)
 
     def log_evidence(self, bic=True):
-        print("******...")
+        sys.stdout.write('.')
         bic=True
         if self.data:
             n = len(self.data.y)     # number of observations
