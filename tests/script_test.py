@@ -30,14 +30,17 @@ def f3(x):
     """Define a third test oracle function."""
     return max(0, min(0.25 + 0.75 * x[2]**3, 1))
 
+def f4(x):
+    return random.random()
+
 
 if __name__ == '__main__':
 
     """DEMO 1."""
 
-    ndim = 3
-    pool_size = 200
-    budget = 50
+    ndim = 1
+    pool_size = 100
+    budget = 3
 
     pool = HyperCubePool(ndim, pool_size)
     qs = RandomStrategy(pool=pool)
@@ -50,11 +53,11 @@ if __name__ == '__main__':
         ndim=ndim,
     )
 
-    print(learner.models)
+    #print(learner.models)
 
     # TODO: Don't raise exception when there is no data - use prior.
 
-    learner.learn(oracle=f3)
+    learner.learn(oracle=f1)
 
     # # Alternative API for use in external experiment scripts.
     # for i in range(20):
@@ -62,12 +65,14 @@ if __name__ == '__main__':
     #     y = f2(x)
     #     learner.update(x, y)
 
-    print(learner.posteriors)
+    #print(learner.posteriors)
     print(learner.map_model)
 
     # Plot predictions
     # x = np.array([np.linspace(0, 1, 50)]).T
-    x = np.random.rand(50, ndim)
-    learner.plot_predictions(x, dim=2)
+    x = np.random.rand(100, ndim)
+    print(len(x))
+    print(len(learner.models))
+    learner.plot_predictions(x, dim=0)
 
 # TODO: Test that when candidate models are identical, the posteriors match.
