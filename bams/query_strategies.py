@@ -4,7 +4,7 @@ from __future__ import absolute_import
 
 import numpy as np
 import sobol_seq
-
+import random
 
 class HyperCubePool(object):
 
@@ -12,6 +12,7 @@ class HyperCubePool(object):
         self.dim = dim
         self.num_points = num_points
         self._hypercube = sobol_seq.i4_sobol_generate(dim, num_points)
+        #self._hypercube =[[random.random()] for i in range(len(num_points)]
 
     def __getitem__(self, index):
         return self._hypercube[index]

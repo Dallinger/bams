@@ -79,7 +79,6 @@ class GPModel(Model):
         return self.gp.log_likelihood(self.data.y)
 
     def log_evidence(self, bic=True):
-        sys.stdout.write('.')
         bic=True
         if self.data:
             n = len(self.data.y)     # number of observations
@@ -143,8 +142,8 @@ class GrammarModels(object):
                     {"gamma": 0.1, "log_period": -1}),
             "PER": (george.kernels.CosineKernel, {"log_period": 0.25}),
             "K": (george.kernels.ConstantKernel, {"log_constant": 0}),
-            "LIN": (george.kernels.LinearKernel,
-                    {"order": 1, "log_gamma2": 1}),
+            "LIN": (george.kernels.PolynomialKernel,
+                     {"order": 1, "log_sigma2": 2}),
             "DP": (george.kernels.DotProductKernel, {}),
             "LG": (george.kernels.LocalGaussianKernel,
                    {"location": 0.5, "log_width": -1}),
