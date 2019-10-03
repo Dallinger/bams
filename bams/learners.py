@@ -94,7 +94,7 @@ class ActiveLearner(object):
         """Plot the learner's predictions."""
         plt.scatter(self.data.x[:, dim], self.data.y)
         (predictions, uncertainty) = self.predict(x)
-        plt.scatter(x[:, dim], predictions)
+        plt.scatter(x[:, dim], predictions, marker='.')
         plt.ylim([0, 1])
         plt.xlim([0, 1])
         plt.show()
